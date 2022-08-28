@@ -9,7 +9,9 @@ import {
 } from 'react-native';
 import { Colors } from 'react-native/Libraries/NewAppScreen';
 
-const HomeScreen = () => {
+import { RootStackRoutes, type RootStackScreenProps } from './navigation';
+
+const HomeScreen = (props: RootStackScreenProps<RootStackRoutes.Home>) => {
   const isDarkMode = useColorScheme() === 'dark';
 
   const backgroundStyle = {
