@@ -22,7 +22,7 @@ export type RootStackScreenProps<Screen extends keyof RootStackParamList> =
 
 export const linking: LinkingOptions<RootStackParamList> = {
   prefixes: [
-    'https://explorereactnativeappclippasskit.page.link',
+    'https://explorereactnativeappclippasskit.kalalau.dev',
     'reactnativeappkitpasskit://',
   ],
 
