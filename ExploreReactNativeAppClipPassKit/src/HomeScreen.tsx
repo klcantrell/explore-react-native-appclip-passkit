@@ -1,5 +1,6 @@
-import React, { type PropsWithChildren } from 'react';
+import React, { useEffect, useState, type PropsWithChildren } from 'react';
 import {
+  Button,
   SafeAreaView,
   StatusBar,
   StyleSheet,
@@ -10,6 +11,7 @@ import {
 import { Colors } from 'react-native/Libraries/NewAppScreen';
 
 import { RootStackRoutes, type RootStackScreenProps } from './navigation';
+import walletManager from './walletManager';
 
 const HomeScreen = (props: RootStackScreenProps<RootStackRoutes.Home>) => {
   const isDarkMode = useColorScheme() === 'dark';
@@ -46,6 +48,16 @@ const Section: React.FC<
   }>
 > = ({ children, title }) => {
   const isDarkMode = useColorScheme() === 'dark';
+  const [hasPass, setHasPass] = useState(false);
+
+  useEffect(() => {
+    walletManager
+      .hasPass('pass.com.kalalau.free-thing', 'bgsksfuioa')
+      .then((result) => {
+        setHasPass(result);
+      });
+  });
+
   return (
     <View>
       <Text
@@ -66,6 +78,49 @@ const Section: React.FC<
         ]}>
         {children}
       </Text>
+      <View style={{ height: 30 }} />
+      {hasPass ? (
+        <>
+          <Text>
+            {
+              'You already have a pass: \n\n\tpassIdentifier: pass.com.kalalau.free-thing \n\tserialNumber: bgsksfuioa '
+            }
+          </Text>
+          <View style={{ height: 30 }} />
+          <Button
+            title="Open it"
+            onPress={() => {
+              walletManager.openPass(
+                'pass.com.kalalau.free-thing',
+                'bgsksfuioa',
+              );
+            }}
+          />
+        </>
+      ) : (
+        <Button
+          title="Give me a free thing"
+          onPress={async () => {
+            try {
+              walletManager.downloadWalletPassFromUrl(
+                'http://localhost:3000/applepass',
+                async () => {
+                  setHasPass(
+                    await walletManager.hasPass(
+                      'pass.com.kalalau.free-thing',
+                      'bgsksfuioa',
+                    ),
+                  );
+                },
+              );
+            } catch (error) {
+              console.log(
+                '[downloadWalletPassFromUrl button handler]: unable to download wallet pass',
+              );
+            }
+          }}
+        />
+      )}
     </View>
   );
 };

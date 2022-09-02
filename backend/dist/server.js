@@ -7,9 +7,9 @@ const express_1 = __importDefault(require("express"));
 const path_1 = __importDefault(require("path"));
 const app = (0, express_1.default)();
 const port = process.env.PORT || 3000;
-app.get('/pass', (req, res) => {
+app.get('/applepass', (req, res) => {
     res.sendFile(path_1.default.join(__dirname, '/myFirstPass.pkpass'), { type: 'application/vnd.apple.pkpass' });
 });
 app.listen(port, () => {
-    console.log(`[server]: Server is running at https://localhost:${port}`);
+    console.log(`Server is running at https://localhost:${port}`);
 });

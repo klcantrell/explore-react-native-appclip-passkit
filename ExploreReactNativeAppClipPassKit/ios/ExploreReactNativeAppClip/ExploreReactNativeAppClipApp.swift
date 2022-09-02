@@ -4,7 +4,7 @@ import SwiftUI
 struct ExploreReactNativeAppClipApp: App {
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            ContentView(walletManager: WalletManager())
         }
     }
 }
