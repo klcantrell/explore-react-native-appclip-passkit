@@ -1,0 +1,27 @@
+{
+	"formatVersion": 1,
+	"passTypeIdentifier": "pass.com.kalalau.free-thing",
+	"serialNumber": "analternateserialnumber",
+	"teamIdentifier": "BMJG6U6BC7",
+	"barcodes": [
+		{
+			"message": "123456789",
+			"format": "PKBarcodeFormatQR",
+			"messageEncoding": "iso-8859-1"
+		}
+	],
+	"organizationName": "Kalalau",
+	"description": "Something free for you",
+	"backgroundColor": "rgb(6,147,227)",
+  "foregroundColor":"rgb(255,105,0)",
+  "labelColor":"rgb(6,147,227)",
+	"coupon": {
+		"primaryFields": [
+			{
+				"key": "offer",
+				"label": "You likey free thing?",
+				"value": "A freebie"
+			}
+		]
+	}
+}

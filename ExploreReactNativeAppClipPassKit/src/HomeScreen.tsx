@@ -13,6 +13,8 @@ import { Colors } from 'react-native/Libraries/NewAppScreen';
 import { RootStackRoutes, type RootStackScreenProps } from './navigation';
 import walletManager from './walletManager';
 
+const PASS_SERIAL_NUMBER = 'analternateserialnumber'; // alt. bgsksfuioa
+
 const HomeScreen = (props: RootStackScreenProps<RootStackRoutes.Home>) => {
   const isDarkMode = useColorScheme() === 'dark';
 
@@ -52,7 +54,7 @@ const Section: React.FC<
 
   useEffect(() => {
     walletManager
-      .hasPass('pass.com.kalalau.free-thing', 'bgsksfuioa')
+      .hasPass('pass.com.kalalau.free-thing', PASS_SERIAL_NUMBER)
       .then((result) => {
         setHasPass(result);
       });
@@ -82,9 +84,7 @@ const Section: React.FC<
       {hasPass ? (
         <>
           <Text>
-            {
-              'You already have a pass: \n\n\tpassIdentifier: pass.com.kalalau.free-thing \n\tserialNumber: bgsksfuioa '
-            }
+            {`You already have a pass: \n\n\tpassIdentifier: pass.com.kalalau.free-thing \n\tserialNumber: ${PASS_SERIAL_NUMBER}`}
           </Text>
           <View style={{ height: 30 }} />
           <Button
@@ -92,7 +92,7 @@ const Section: React.FC<
             onPress={() => {
               walletManager.openPass(
                 'pass.com.kalalau.free-thing',
-                'bgsksfuioa',
+                PASS_SERIAL_NUMBER,
               );
             }}
           />
@@ -108,7 +108,7 @@ const Section: React.FC<
                   setHasPass(
                     await walletManager.hasPass(
                       'pass.com.kalalau.free-thing',
-                      'bgsksfuioa',
+                      PASS_SERIAL_NUMBER,
                     ),
                   );
                 },
