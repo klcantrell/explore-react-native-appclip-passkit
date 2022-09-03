@@ -2,6 +2,7 @@ import PassKit
 
 class WalletManager: NSObject {
   var walletSavedCompletionHandler: (Errors?) -> Void = { _ in }
+  var fetchedPass: PKPass? = nil
 
   func downloadWalletPass(url: String, completionHandler: @escaping (Errors?) -> Void = { _ in }) {
     guard let url = URL(string: url) else {
@@ -18,6 +19,7 @@ class WalletManager: NSObject {
 
       do {
         let pass = try PKPass(data: data)
+        self.fetchedPass = pass
 
         DispatchQueue.main.async {
           self.presentPass(pass)
@@ -32,23 +34,28 @@ class WalletManager: NSObject {
     dataTask.resume()
   }
 
-  func downloadWalletPass(url: String, completionHandler: @escaping (PKPass) -> Void = { _ in }) throws {
-    guard let url = URL(string: url) else { throw Errors.invalidUrl }
+  func downloadWalletPass(url: String, onSuccess: @escaping (PKPass) -> Void, onFailure: @escaping (Errors) -> Void) {
+    guard let url = URL(string: url) else {
+      onFailure(Errors.invalidUrl)
+      return
+    }
 
     let dataTask = URLSession.shared.dataTask(with: url) { (data, _, error) in
       guard let data = data, error == nil else {
-        fatalError("Failed to fetch wallet pass at \(url.absoluteString)")
+        onFailure(Errors.failedToFetchPass)
+        return
       }
 
       do {
         let pass = try PKPass(data: data)
-        self.walletSavedCompletionHandler = { _ in completionHandler(pass) }
+        self.fetchedPass = pass
+        self.walletSavedCompletionHandler = { _ in onSuccess(pass) }
 
         DispatchQueue.main.async {
           self.presentPass(pass)
         }
       } catch {
-        print("Unable to download wallet pass: \(error)")
+        onFailure(Errors.failedToDecodePass)
       }
     }
 
@@ -118,7 +125,11 @@ class WalletManager: NSObject {
 extension WalletManager: PKAddPassesViewControllerDelegate {
   func addPassesViewControllerDidFinish(_ controller: PKAddPassesViewController) {
     controller.dismiss(animated: true) {
-      self.walletSavedCompletionHandler(nil)
+      let passLibrary = PKPassLibrary()
+      if let fetchedPass = self.fetchedPass,
+         passLibrary.containsPass(fetchedPass) {
+        self.walletSavedCompletionHandler(nil)
+      }
 
       controller.delegate = nil
       self.walletSavedCompletionHandler = { _ in }

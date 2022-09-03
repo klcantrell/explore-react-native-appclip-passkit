@@ -10,36 +10,43 @@ struct ContentView: View {
 
   @State var alreadyHasPass: Bool? = nil
   @State var fetchedPass: PKPass? = nil
+  @State var errorMessage: String? = nil
 
   var body: some View {
     VStack {
-      if let hasPass = alreadyHasPass {
-        if hasPass {
-          Text("You already have a pass")
-        } else {
-          Text("You likey free thing?")
-            .padding()
-          AddPassButton()
-            .onTapGesture {
-              do {
+      if let errorMessage = errorMessage {
+        Text(errorMessage)
+          .padding()
+      } else {
+        if let hasPass = alreadyHasPass {
+          if hasPass {
+            Text("You already have a pass")
+              .padding()
+          } else {
+            Text("You likey free thing?")
+              .padding()
+            AddPassButton()
+              .onTapGesture {
                 if let fetchedPass = fetchedPass {
                   walletManager.presentPass(fetchedPass)
                 } else {
-                  try walletManager.downloadWalletPass(url: "http://localhost:3000/applepass") { (pass: PKPass) in
-                    alreadyHasPass = true
-                    if let defaults = UserDefaults(suiteName: APP_GROUP) {
-                      defaults.set(pass.serialNumber, forKey: PASS_ID)
-                    }
-                  }
+                  walletManager.downloadWalletPass(
+                    url: "http://localhost:3000/applepass",
+                    onSuccess: { (pass: PKPass) in
+                      alreadyHasPass = true
+                      if let defaults = UserDefaults(suiteName: APP_GROUP) {
+                        defaults.set(pass.serialNumber, forKey: PASS_ID)
+                      }
+                    }, onFailure: { _ in
+                      errorMessage = "Could not download your pass. Please check your internet connection and try again."
+                    })
                 }
-              } catch {
-                print("Failed to download new pass")
               }
-            }
-            .frame(minWidth: 200, maxWidth: 300, minHeight: 60, maxHeight: 80)
+              .frame(minWidth: 200, maxWidth: 300, minHeight: 60, maxHeight: 80)
+          }
+        } else {
+          ProgressView().frame(height: 40)
         }
-      } else {
-        ProgressView()
       }
     }
     .onAppear {
