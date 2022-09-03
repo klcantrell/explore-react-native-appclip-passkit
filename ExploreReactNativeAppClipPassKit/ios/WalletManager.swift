@@ -1,46 +1,58 @@
 import PassKit
 
 class WalletManager: NSObject {
-  var walletSavedCompletionHandler: () -> Void = {}
-  var fetchedPass: PKPass? = nil
+  var walletSavedCompletionHandler: (Errors?) -> Void = { _ in }
 
-  @MainActor
-  func downloadWalletPass(url: String, onPassSaved: @escaping () -> Void = {}) async throws {
+  func downloadWalletPass(url: String, completionHandler: @escaping (Errors?) -> Void = { _ in }) {
     guard let url = URL(string: url) else {
-      throw Errors.invalidUrl
+      completionHandler(Errors.invalidUrl)
+      return
     }
 
-    self.walletSavedCompletionHandler = onPassSaved
+    self.walletSavedCompletionHandler = completionHandler
+    let dataTask = URLSession.shared.dataTask(with: url) { (data, _, error) in
+      guard let data = data, error == nil else {
+        completionHandler(Errors.failedToFetchPass)
+        return
+      }
 
-    do {
-      let (data, _) = try await URLSession.shared.data(from: url)
-      let pass = try PKPass(data: data)
-      self.fetchedPass = pass
-      self.presentPass(pass)
-    } catch is PKPassKitError {
-      throw Errors.failedToDecodePass
-    } catch {
-      throw Errors.failedToFetchPass
+      do {
+        let pass = try PKPass(data: data)
+
+        DispatchQueue.main.async {
+          self.presentPass(pass)
+        }
+      } catch {
+        print("Unable to download wallet pass: \(error)")
+        completionHandler(Errors.failedToDecodePass)
+        return
+      }
     }
+
+    dataTask.resume()
   }
 
-  @MainActor
-  func downloadWalletPass(url: String, onPassSaved: @escaping (PKPass) -> Void = { _ in }) async throws {
-    guard let url = URL(string: url) else {
-      throw Errors.invalidUrl
+  func downloadWalletPass(url: String, completionHandler: @escaping (PKPass) -> Void = { _ in }) throws {
+    guard let url = URL(string: url) else { throw Errors.invalidUrl }
+
+    let dataTask = URLSession.shared.dataTask(with: url) { (data, _, error) in
+      guard let data = data, error == nil else {
+        fatalError("Failed to fetch wallet pass at \(url.absoluteString)")
+      }
+
+      do {
+        let pass = try PKPass(data: data)
+        self.walletSavedCompletionHandler = { _ in completionHandler(pass) }
+
+        DispatchQueue.main.async {
+          self.presentPass(pass)
+        }
+      } catch {
+        print("Unable to download wallet pass: \(error)")
+      }
     }
 
-    do {
-      let (data, _) = try await URLSession.shared.data(from: url)
-      let pass = try PKPass(data: data)
-      self.walletSavedCompletionHandler = { onPassSaved(pass) }
-      self.fetchedPass = pass
-      self.presentPass(pass)
-    } catch is PKPassKitError {
-      throw Errors.failedToDecodePass
-    } catch {
-      throw Errors.failedToFetchPass
-    }
+    dataTask.resume()
   }
 
   func hasPass(cardIdentifier: String, serialNumber: String) -> Bool {
@@ -106,15 +118,10 @@ class WalletManager: NSObject {
 extension WalletManager: PKAddPassesViewControllerDelegate {
   func addPassesViewControllerDidFinish(_ controller: PKAddPassesViewController) {
     controller.dismiss(animated: true) {
-      let passLibrary = PKPassLibrary()
-      if let fetchedPass = self.fetchedPass,
-         passLibrary.containsPass(fetchedPass) {
-        self.walletSavedCompletionHandler()
-      }
+      self.walletSavedCompletionHandler(nil)
 
       controller.delegate = nil
-      self.walletSavedCompletionHandler = {}
-      self.fetchedPass = nil
+      self.walletSavedCompletionHandler = { _ in }
     }
   }
 }

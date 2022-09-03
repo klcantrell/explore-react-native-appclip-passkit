@@ -6,17 +6,11 @@ class RNWalletManager: NSObject {
   
   @objc(downloadWalletPassFromUrl:resolve:reject:)
   func downloadWalletPassFromUrl(_ url: String, resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
-    Task {
-      do {
-        try await walletManager.downloadWalletPass(url: url) {
-          resolve(nil)
-        }
-      } catch {
-        if let error = error as? Errors {
-          reject(error.asString(), "", nil)
-        } else {
-          reject("unknon error downloading wallet pass", "", nil)
-        }
+    walletManager.downloadWalletPass(url: url) {(error: Errors?) in
+      if error != nil {
+        reject(error!.asString(), "", nil)
+      } else {
+        resolve(nil)
       }
     }
   }
