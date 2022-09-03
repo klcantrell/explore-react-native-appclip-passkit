@@ -1,15 +1,19 @@
 import PassKit
 
 class WalletManager: NSObject {
-  var completionHandler: () -> Void = {}
+  var walletSavedCompletionHandler: (Errors?) -> Void = { _ in }
 
-  func downloadWalletPass(url: String, completionHandler: @escaping () -> Void = {}) throws {
-    guard let url = URL(string: url) else { throw Errors.invalidUrl }
+  func downloadWalletPass(url: String, completionHandler: @escaping (Errors?) -> Void = { _ in }) {
+    guard let url = URL(string: url) else {
+      completionHandler(Errors.invalidUrl)
+      return
+    }
 
-    self.completionHandler = completionHandler
+    self.walletSavedCompletionHandler = completionHandler
     let dataTask = URLSession.shared.dataTask(with: url) { (data, _, error) in
       guard let data = data, error == nil else {
-        fatalError("Failed to fetch wallet pass at \(url.absoluteString)")
+        completionHandler(Errors.failedToFetchPass)
+        return
       }
 
       do {
@@ -20,6 +24,8 @@ class WalletManager: NSObject {
         }
       } catch {
         print("Unable to download wallet pass: \(error)")
+        completionHandler(Errors.failedToDecodePass)
+        return
       }
     }
 
@@ -36,7 +42,7 @@ class WalletManager: NSObject {
 
       do {
         let pass = try PKPass(data: data)
-        self.completionHandler = { completionHandler(pass) }
+        self.walletSavedCompletionHandler = { _ in completionHandler(pass) }
 
         DispatchQueue.main.async {
           self.presentPass(pass)
@@ -112,14 +118,27 @@ class WalletManager: NSObject {
 extension WalletManager: PKAddPassesViewControllerDelegate {
   func addPassesViewControllerDidFinish(_ controller: PKAddPassesViewController) {
     controller.dismiss(animated: true) {
-      self.completionHandler()
+      self.walletSavedCompletionHandler(nil)
 
       controller.delegate = nil
-      self.completionHandler = {}
+      self.walletSavedCompletionHandler = { _ in }
     }
   }
 }
 
 enum Errors: Error {
-  case invalidUrl
+  case invalidUrl, failedToFetchPass, failedToDecodePass
+}
+
+extension Errors {
+  func asString() -> String {
+    switch self {
+    case .invalidUrl:
+      return "invalidUrl"
+    case .failedToFetchPass:
+      return "failedToFetchPass"
+    case .failedToDecodePass:
+      return "failedToDecodePass"
+    }
+  }
 }

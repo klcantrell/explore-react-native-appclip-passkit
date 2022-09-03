@@ -11,7 +11,7 @@ import {
 import { Colors } from 'react-native/Libraries/NewAppScreen';
 
 import { RootStackRoutes, type RootStackScreenProps } from './navigation';
-import walletManager from './walletManager';
+import walletManager, { isWalletManagerError } from './walletManager';
 
 const PASS_SERIAL_NUMBER = 'analternateserialnumber'; // alt. bgsksfuioa
 
@@ -51,6 +51,7 @@ const Section: React.FC<
 > = ({ children, title }) => {
   const isDarkMode = useColorScheme() === 'dark';
   const [hasPass, setHasPass] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     walletManager
@@ -59,6 +60,14 @@ const Section: React.FC<
         setHasPass(result);
       });
   });
+
+  if (error) {
+    return (
+      <View>
+        <Text style={styles.sectionTitle}>{error}</Text>
+      </View>
+    );
+  }
 
   return (
     <View>
@@ -102,21 +111,32 @@ const Section: React.FC<
           title="Give me a free thing"
           onPress={async () => {
             try {
-              walletManager.downloadWalletPassFromUrl(
+              await walletManager.downloadWalletPassFromUrl(
                 'http://localhost:3000/applepass',
-                async () => {
-                  setHasPass(
-                    await walletManager.hasPass(
-                      'pass.com.kalalau.free-thing',
-                      PASS_SERIAL_NUMBER,
-                    ),
-                  );
-                },
+              );
+              setHasPass(
+                await walletManager.hasPass(
+                  'pass.com.kalalau.free-thing',
+                  PASS_SERIAL_NUMBER,
+                ),
               );
             } catch (error) {
-              console.log(
-                '[downloadWalletPassFromUrl button handler]: unable to download wallet pass',
-              );
+              if (isWalletManagerError(error)) {
+                let message =
+                  'Something went really wrong downloading the pass. Please check your internet connection and try again';
+                switch (error.code) {
+                  case 'invalidUrl':
+                    message = 'The wallet pass download URL is incorrect';
+                    break;
+                  case 'failedToFetchPass':
+                    message =
+                      'Could not fetch your pass. Please check your internet connection and try again.';
+                    break;
+                  default:
+                    break;
+                }
+                setError(message);
+              }
             }
           }}
         />

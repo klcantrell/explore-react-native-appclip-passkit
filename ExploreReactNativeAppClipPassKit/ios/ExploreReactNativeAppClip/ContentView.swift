@@ -25,7 +25,7 @@ struct ContentView: View {
                 if let fetchedPass = fetchedPass {
                   walletManager.presentPass(fetchedPass)
                 } else {
-                  try walletManager.downloadWalletPass(url: "http://localhost:3000/applepass") { pass in
+                  try walletManager.downloadWalletPass(url: "http://localhost:3000/applepass") { (pass: PKPass) in
                     alreadyHasPass = true
                     if let defaults = UserDefaults(suiteName: APP_GROUP) {
                       defaults.set(pass.serialNumber, forKey: PASS_ID)

@@ -4,12 +4,14 @@ import PassKit
 class RNWalletManager: NSObject {
   let walletManager = WalletManager()
   
-  @objc(downloadWalletPassFromUrl:completionHandler:)
-  func downloadWalletPassFromUrl(_ url: String, completionHandler: @escaping RCTResponseSenderBlock) {
-    do {
-      try walletManager.downloadWalletPass(url: url, completionHandler: { completionHandler([]) })
-    } catch {
-      print("[RNWalletManager] error downloading pass from url")
+  @objc(downloadWalletPassFromUrl:resolve:reject:)
+  func downloadWalletPassFromUrl(_ url: String, resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
+    walletManager.downloadWalletPass(url: url) {(error: Errors?) in
+      if error != nil {
+        reject(error!.asString(), "", nil)
+      } else {
+        resolve(nil)
+      }
     }
   }
 
