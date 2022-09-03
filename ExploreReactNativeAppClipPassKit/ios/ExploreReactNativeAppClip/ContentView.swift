@@ -10,36 +10,45 @@ struct ContentView: View {
 
   @State var alreadyHasPass: Bool? = nil
   @State var fetchedPass: PKPass? = nil
+  @State var errorMessage: String? = nil
 
   var body: some View {
     VStack {
-      if let hasPass = alreadyHasPass {
-        if hasPass {
-          Text("You already have a pass")
-        } else {
-          Text("You likey free thing?")
-            .padding()
-          AddPassButton()
-            .onTapGesture {
-              do {
+      if let errorMessage = errorMessage {
+        Text(errorMessage)
+          .padding()
+      } else {
+        if let hasPass = alreadyHasPass {
+          if hasPass {
+            Text("You already have a pass")
+              .padding()
+          } else {
+            Text("You likey free thing?")
+              .padding()
+            AddPassButton()
+              .onTapGesture {
                 if let fetchedPass = fetchedPass {
                   walletManager.presentPass(fetchedPass)
                 } else {
-                  try walletManager.downloadWalletPass(url: "http://localhost:3000/applepass") { (pass: PKPass) in
-                    alreadyHasPass = true
-                    if let defaults = UserDefaults(suiteName: APP_GROUP) {
-                      defaults.set(pass.serialNumber, forKey: PASS_ID)
+                  Task {
+                    do {
+                      try await walletManager.downloadWalletPass(url: "http://localhost:3000/applepass", onPassSaved: { (pass: PKPass) in
+                        alreadyHasPass = true
+                        if let defaults = UserDefaults(suiteName: APP_GROUP) {
+                          defaults.set(pass.serialNumber, forKey: PASS_ID)
+                        }
+                      })
+                    } catch {
+                      errorMessage = "Something went wrong downloading your pass. Please check your connection and try again."
                     }
                   }
                 }
-              } catch {
-                print("Failed to download new pass")
               }
-            }
-            .frame(minWidth: 200, maxWidth: 300, minHeight: 60, maxHeight: 80)
+              .frame(minWidth: 200, maxWidth: 300, minHeight: 60, maxHeight: 80)
+          }
+        } else {
+          ProgressView()
         }
-      } else {
-        ProgressView()
       }
     }
     .onAppear {
