@@ -1,4 +1,5 @@
 <resources>
     <string name="app_name">ExploreReactNativeAppClipPassKit</string>
     <string name="title_instant">Explore React Native Instant App Google Wallet</string>
+    <string name="add_to_google_wallet_button_content_description">Add to Google Wallet</string>
 </resources>

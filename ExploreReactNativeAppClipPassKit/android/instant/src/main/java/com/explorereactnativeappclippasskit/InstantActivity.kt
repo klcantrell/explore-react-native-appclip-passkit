@@ -1,6 +1,9 @@
 package com.explorereactnativeappclippasskit
 
+import android.content.Intent
 import android.os.Bundle
+import android.view.View
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
@@ -8,6 +11,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -19,43 +24,208 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.viewinterop.AndroidView
+import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.ViewModel
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
+import com.google.android.gms.pay.Pay
+import com.google.android.gms.pay.PayApiAvailabilityStatus
+import com.google.android.gms.pay.PayClient
+import com.google.android.gms.pay.PayClient.SavePassesResult.SAVE_ERROR
+import java.util.*
+import kotlin.random.Random.Default.nextInt
+
+private const val issuerEmail = "cantrellkalalau@gmail.com"
+private const val issuerId = "3388000000022129788"
+private const val passClass = "3388000000022129788.8b349263-2b4b-4bd6-b609-eade3f734a07"
+private val passId = UUID.randomUUID().toString()
+
+private const val addToGoogleWalletRequestCode = 1000
+
+private val newObjectJson = """
+    {
+      "iss": "$issuerEmail",
+      "aud": "google",
+      "typ": "savetowallet",
+      "iat": ${Date().time / 1000L},
+      "origins": [],
+      "payload": {
+        "genericObjects": [
+          {
+            "id": "$issuerId.$passId",
+            "classId": "$passClass",
+            "genericType": "GENERIC_TYPE_UNSPECIFIED",
+            "hexBackgroundColor": "#4285f4",
+            "logo": {
+              "sourceUri": {
+                "uri": "https://storage.googleapis.com/wallet-lab-tools-codelab-artifacts-public/pass_google_logo.jpg"
+              }
+            },
+            "cardTitle": {
+              "defaultValue": {
+                "language": "en",
+                "value": "Google I/O '22  [DEMO ONLY]"
+              }
+            },
+            "subheader": {
+              "defaultValue": {
+                "language": "en",
+                "value": "Attendee"
+              }
+            },
+            "header": {
+              "defaultValue": {
+                "language": "en",
+                "value": "Kal Cantrell"
+              }
+            },
+            "barcode": {
+              "type": "QR_CODE",
+              "value": "$passId"
+            },
+            "heroImage": {
+              "sourceUri": {
+                "uri": "https://storage.googleapis.com/wallet-lab-tools-codelab-artifacts-public/google-io-hero-demo-only.jpg"
+              }
+            },
+            "textModulesData": [
+              {
+                "header": "POINTS",
+                "body": "${nextInt(0, 9999)}",
+                "id": "points"
+              },
+              {
+                "header": "CONTACTS",
+                "body": "${nextInt(1, 99)}",
+                "id": "contacts"
+              }
+            ]
+          }
+        ]
+      }
+    }
+    """
 
 class InstantActivity : AppCompatActivity() {
+    private lateinit var walletClient: PayClient
+
+    private val viewModel = InstantViewModel()
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        walletClient = Pay.getClient(this)
+        fetchCanUseGoogleWalletApi()
 
         setContentView(
             ComposeView(this).apply {
                 setContent {
                     val systemUiController = rememberSystemUiController()
                     val useDarkIcons = !isSystemInDarkTheme()
+                    val googleWalletEnabled: Boolean? by viewModel.googleWalletEnabled.observeAsState(
+                        null
+                    )
 
                     SideEffect {
-                        systemUiController.setStatusBarColor(Color.Transparent, darkIcons = useDarkIcons)
-                        systemUiController.setNavigationBarColor(LightGray, darkIcons = useDarkIcons)
+                        systemUiController.setStatusBarColor(
+                            Color.Transparent,
+                            darkIcons = useDarkIcons
+                        )
+                        systemUiController.setNavigationBarColor(
+                            LightGray,
+                            darkIcons = useDarkIcons
+                        )
                     }
 
                     MyComposeApplicationTheme {
-                        Greeting()
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .fillMaxHeight()
+                                .padding(horizontal = dimensionResource(R.dimen.margin_small)),
+                            verticalArrangement = Arrangement.Center,
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                        ) {
+                            Title()
+                            Spacer(modifier = Modifier.height(dimensionResource(R.dimen.margin_small)))
+                            if (googleWalletEnabled == null) {
+                                CircularProgressIndicator()
+                            }
+                            if (googleWalletEnabled == true) {
+                                AndroidView(
+                                    modifier = Modifier.height(50.dp),
+                                    factory = {
+                                        val view = View.inflate(
+                                            it,
+                                            R.layout.add_to_google_wallet_button,
+                                            null
+                                        )
+                                        view.setOnClickListener {
+                                            walletClient.savePasses(
+                                                newObjectJson,
+                                                this@InstantActivity,
+                                                addToGoogleWalletRequestCode
+                                            )
+                                        }
+                                        view
+                                    }
+                                )
+                            }
+                        }
                     }
                 }
             }
         )
     }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+
+        if (requestCode == addToGoogleWalletRequestCode) {
+            when (resultCode) {
+                RESULT_OK -> {
+                    // Pass saved successfully. Consider informing the user.
+                    Toast.makeText(this, "You saved the pass!", Toast.LENGTH_LONG).show()
+                }
+                RESULT_CANCELED -> {
+                    // Save canceled
+                    Toast.makeText(this, "You canceled the save :(", Toast.LENGTH_LONG).show()
+                }
+
+                SAVE_ERROR -> data?.let { intentData ->
+                    val errorMessage = intentData.getStringExtra(PayClient.EXTRA_API_ERROR_MESSAGE)
+                    // Handle error. Consider informing the user.
+                    Toast.makeText(this, "Something went wrong: $errorMessage", Toast.LENGTH_LONG).show()
+                }
+
+                else -> {
+                    // Handle unexpected (non-API) exception
+                    Toast.makeText(this, "Something went haywire. Please try again.", Toast.LENGTH_LONG).show()
+                }
+            }
+        }
+    }
+
+
+    private fun fetchCanUseGoogleWalletApi() {
+        walletClient
+            .getPayApiAvailabilityStatus(PayClient.RequestType.SAVE_PASSES)
+            .addOnSuccessListener { status ->
+                if (status == PayApiAvailabilityStatus.AVAILABLE) {
+                    viewModel.googleWalletEnabled.value = true
+                }
+            }
+            .addOnFailureListener {
+                viewModel.googleWalletEnabled.value = false
+            }
+    }
 }
 
 @Composable
-private fun Greeting() {
+private fun Title() {
     Text(
-        text = stringResource(R.string.hello),
+        text = stringResource(R.string.title),
         style = MaterialTheme.typography.h5,
-        modifier = Modifier
-            .fillMaxWidth()
-            .fillMaxHeight()
-            .padding(horizontal = dimensionResource(R.dimen.margin_small))
-            .wrapContentWidth(Alignment.CenterHorizontally)
-            .wrapContentHeight(Alignment.CenterVertically)
     )
 }
 
@@ -76,6 +246,10 @@ fun MyComposeApplicationTheme(
         shapes = Shapes,
         content = content
     )
+}
+
+class InstantViewModel : ViewModel() {
+    val googleWalletEnabled = MutableLiveData<Boolean?>(null)
 }
 
 // Color tokens
