@@ -1,7 +1,9 @@
 package com.explorereactnativeappclippasskit
 
+import android.content.Context
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
@@ -39,8 +41,10 @@ private const val issuerEmail = "cantrellkalalau@gmail.com"
 private const val issuerId = "3388000000022129788"
 private const val passClass = "3388000000022129788.8b349263-2b4b-4bd6-b609-eade3f734a07"
 private val passId = UUID.randomUUID().toString()
-
 private const val addToGoogleWalletRequestCode = 1000
+
+private const val SHARED_PREFERENCES_KEY = "explorereactnativeappclippasskit.key"
+private const val KEY_TEST = "test.key"
 
 private val newObjectJson = """
     {
@@ -113,6 +117,16 @@ class InstantActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        val preferences = getSharedPreferences(SHARED_PREFERENCES_KEY, Context.MODE_PRIVATE)
+
+        Log.d("KLC", preferences.getString(KEY_TEST, "DEF VALUE FOR SHARED PREFERENCES") ?: "NOTHING IN SHARED PREFERENCES")
+
+        val editor = preferences.edit()
+        editor.putString(KEY_TEST, "TEST_VALUE_123")
+        editor.apply()
+
+        Log.d("KLC", preferences.getString(KEY_TEST, "DEF VALUE FOR SHARED PREFERENCES") ?: "NOTHING IN SHARED PREFERENCES")
 
         walletClient = Pay.getClient(this)
         fetchCanUseGoogleWalletApi()
@@ -216,6 +230,9 @@ class InstantActivity : AppCompatActivity() {
                 }
             }
             .addOnFailureListener {
+                Log.d("KLC", "Pay API not available ${it.localizedMessage}")
+                Log.d("KLC", "Pay API not available ${it.cause}")
+                Log.d("KLC", "Pay API not available ${it.stackTrace}")
                 viewModel.googleWalletEnabled.value = false
             }
     }
