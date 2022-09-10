@@ -1,4 +1,10 @@
-certs/
 node_modules/
 
+# Apple certificates and keys
+certs/
+
+# Apple pass signatures
 **/passes/**/signature
+
+# Google API credentials
+dist/wallet-spike-web-client-1161686fdc40.json

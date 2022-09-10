@@ -42,7 +42,7 @@ struct ContentView: View {
                     })
                 }
               }
-              .frame(minWidth: 200, maxWidth: 300, minHeight: 60, maxHeight: 80)
+              .frame(width: 275, height: 60)
           }
         } else {
           ProgressView().frame(height: 40)

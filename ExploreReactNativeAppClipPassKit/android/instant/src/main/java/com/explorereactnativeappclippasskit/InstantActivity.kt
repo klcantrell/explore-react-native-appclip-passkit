@@ -35,17 +35,14 @@ import com.google.android.gms.pay.PayApiAvailabilityStatus
 import com.google.android.gms.pay.PayClient
 import com.google.android.gms.pay.PayClient.SavePassesResult.SAVE_ERROR
 import java.util.*
-import kotlin.random.Random.Default.nextInt
 
 private const val issuerEmail = "cantrellkalalau@gmail.com"
-private const val issuerId = "3388000000022129788"
-private const val passClass = "3388000000022129788.8b349263-2b4b-4bd6-b609-eade3f734a07"
-private val passId = UUID.randomUUID().toString()
 private const val addToGoogleWalletRequestCode = 1000
 
 private const val SHARED_PREFERENCES_KEY = "explorereactnativeappclippasskit.key"
 private const val KEY_TEST = "test.key"
 
+// loyalty object below is hard-coded response that would come from a backend endpoint
 private val newObjectJson = """
     {
       "iss": "$issuerEmail",
@@ -54,61 +51,75 @@ private val newObjectJson = """
       "iat": ${Date().time / 1000L},
       "origins": [],
       "payload": {
-        "genericObjects": [
-          {
-            "id": "$issuerId.$passId",
-            "classId": "$passClass",
-            "genericType": "GENERIC_TYPE_UNSPECIFIED",
-            "hexBackgroundColor": "#4285f4",
-            "logo": {
-              "sourceUri": {
-                "uri": "https://storage.googleapis.com/wallet-lab-tools-codelab-artifacts-public/pass_google_logo.jpg"
-              }
-            },
-            "cardTitle": {
-              "defaultValue": {
-                "language": "en",
-                "value": "Google I/O '22  [DEMO ONLY]"
-              }
-            },
-            "subheader": {
-              "defaultValue": {
-                "language": "en",
-                "value": "Attendee"
-              }
-            },
-            "header": {
-              "defaultValue": {
-                "language": "en",
-                "value": "Kal Cantrell"
-              }
-            },
-            "barcode": {
-              "type": "QR_CODE",
-              "value": "$passId"
-            },
-            "heroImage": {
-              "sourceUri": {
-                "uri": "https://storage.googleapis.com/wallet-lab-tools-codelab-artifacts-public/google-io-hero-demo-only.jpg"
-              }
-            },
-            "textModulesData": [
-              {
-                "header": "POINTS",
-                "body": "${nextInt(0, 9999)}",
-                "id": "points"
-              },
-              {
-                "header": "CONTACTS",
-                "body": "${nextInt(1, 99)}",
-                "id": "contacts"
-              }
-            ]
-          }
+        "loyaltyObjects": [
+            {
+                "kind": "walletobjects#loyaltyObject",
+                "classReference": {
+                    "kind": "walletobjects#loyaltyClass",
+                    "programLogo": {
+                        "kind": "walletobjects#image",
+                        "sourceUri": {
+                            "uri": "https://storage.googleapis.com/wallet-lab-tools-codelab-artifacts-public/pass_google_logo.jpg"
+                        }
+                    },
+                    "localizedProgramName": {
+                        "kind": "walletobjects#localizedString",
+                        "defaultValue": {
+                            "kind": "walletobjects#translatedString",
+                            "language": "en",
+                            "value": "Spike Google Wallet Passes"
+                        }
+                    },
+                    "id": "3388000000022130058.pass.com.explorereactnativeappclippasskit",
+                    "version": "1",
+                    "allowMultipleUsersPerObject": false,
+                    "reviewStatus": "approved",
+                    "countryCode": "US",
+                    "heroImage": {
+                        "kind": "walletobjects#image",
+                        "sourceUri": {
+                            "uri": "https://farm4.staticflickr.com/3723/11177041115_6e6a3b6f49_o.jpg"
+                        }
+                    },
+                    "enableSmartTap": false,
+                    "hexBackgroundColor": "#00a8e4",
+                    "localizedIssuerName": {
+                        "kind": "walletobjects#localizedString",
+                        "defaultValue": {
+                            "kind": "walletobjects#translatedString",
+                            "language": "en",
+                            "value": "cantrellkalalau@gmail.com"
+                        }
+                    },
+                    "multipleDevicesAndHoldersAllowedStatus": "oneUserOneDevice"
+                },
+                "accountName": "Kal Cantrell",
+                "accountId": "testUser123",
+                "loyaltyPoints": {
+                    "label": "Bottles Avoided",
+                    "balance": {
+                        "int": 47
+                    }
+                },
+                "id": "3388000000022130058.testUser123-pass.com.explorereactnativeappclippasskit",
+                "classId": "3388000000022130058.pass.com.explorereactnativeappclippasskit",
+                "version": "1",
+                "state": "active",
+                "barcode": {
+                    "kind": "walletobjects#barcode",
+                    "type": "qrCode",
+                    "value": "kajsdhlkajshdklajshdlk"
+                },
+                "hasUsers": false,
+                "hasLinkedDevice": false
+            }
         ]
       }
     }
     """
+
+// loyalty JWT below is hard-coded response that would come from a backend endpoint
+private const val newObjectJwt = "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJ3YWxsZXQtc3Bpa2Utd2ViLWNsaWVudEB3YWxsZXQtc3Bpa2Utd2ViLWNsaWVudC5pYW0uZ3NlcnZpY2VhY2NvdW50LmNvbSIsImF1ZCI6Imdvb2dsZSIsIm9yaWdpbnMiOlsibG9jYWxob3N0OjMwMDAiXSwidHlwIjoic2F2ZXRvd2FsbGV0IiwicGF5bG9hZCI6eyJsb3lhbHR5T2JqZWN0cyI6W3siaWQiOiIzMzg4MDAwMDAwMDIyMTMwMDU4LnRlc3RVc2VyMTIzLXBhc3MuY29tLmV4cGxvcmVyZWFjdG5hdGl2ZWFwcGNsaXBwYXNza2l0In1dfSwiaWF0IjoxNjYyODMxNjc0fQ.IcBIEaejsDtXqH_Sda3zEm8_DMb2XCxIcD6hfa13zfDW7f88HKJcx6XkZsSzQrtAuRtXMSVqIO0LrphulpJ5DBZ41vjcA7x9A2Kq0u0NPDok2XLAqA8pwbnNnmZ_w0NNHMaOct9kOxJxWEJs_Xjdh6yTYYwkLyJ32xfmOxs9lmCTwe_SaEEenF0Ghe55hV3gY_1GfxA8w6-F364yz_Znhgn8ewlpvhIx5V6xv2Ag-4Lze7r0Lg815l-4F7MyrkmCI5NtdyYyurWFOAmS8sEiL55a0pgWEojXHGI2cQZCZZqox2WgRd04xdWpGtWU85v2dX9DRsf4FHDbR26OZJ1n8w"
 
 class InstantActivity : AppCompatActivity() {
     private lateinit var walletClient: PayClient
@@ -120,13 +131,21 @@ class InstantActivity : AppCompatActivity() {
 
         val preferences = getSharedPreferences(SHARED_PREFERENCES_KEY, Context.MODE_PRIVATE)
 
-        Log.d("KLC", preferences.getString(KEY_TEST, "DEF VALUE FOR SHARED PREFERENCES") ?: "NOTHING IN SHARED PREFERENCES")
+        Log.d(
+            "KLC",
+            preferences.getString(KEY_TEST, "DEF VALUE FOR SHARED PREFERENCES")
+                ?: "NOTHING IN SHARED PREFERENCES"
+        )
 
         val editor = preferences.edit()
         editor.putString(KEY_TEST, "TEST_VALUE_123")
         editor.apply()
 
-        Log.d("KLC", preferences.getString(KEY_TEST, "DEF VALUE FOR SHARED PREFERENCES") ?: "NOTHING IN SHARED PREFERENCES")
+        Log.d(
+            "KLC",
+            preferences.getString(KEY_TEST, "DEF VALUE FOR SHARED PREFERENCES")
+                ?: "NOTHING IN SHARED PREFERENCES"
+        )
 
         walletClient = Pay.getClient(this)
         fetchCanUseGoogleWalletApi()
@@ -175,8 +194,8 @@ class InstantActivity : AppCompatActivity() {
                                             null
                                         )
                                         view.setOnClickListener {
-                                            walletClient.savePasses(
-                                                newObjectJson,
+                                            walletClient.savePassesJwt(
+                                                newObjectJwt,
                                                 this@InstantActivity,
                                                 addToGoogleWalletRequestCode
                                             )
@@ -209,12 +228,17 @@ class InstantActivity : AppCompatActivity() {
                 SAVE_ERROR -> data?.let { intentData ->
                     val errorMessage = intentData.getStringExtra(PayClient.EXTRA_API_ERROR_MESSAGE)
                     // Handle error. Consider informing the user.
-                    Toast.makeText(this, "Something went wrong: $errorMessage", Toast.LENGTH_LONG).show()
+                    Toast.makeText(this, "Something went wrong: $errorMessage", Toast.LENGTH_LONG)
+                        .show()
                 }
 
                 else -> {
                     // Handle unexpected (non-API) exception
-                    Toast.makeText(this, "Something went haywire. Please try again.", Toast.LENGTH_LONG).show()
+                    Toast.makeText(
+                        this,
+                        "Something went haywire. Please try again.",
+                        Toast.LENGTH_LONG
+                    ).show()
                 }
             }
         }
