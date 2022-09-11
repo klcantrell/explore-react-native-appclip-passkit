@@ -186,7 +186,7 @@ class InstantActivity : AppCompatActivity() {
                             }
                             if (googleWalletEnabled == true) {
                                 AndroidView(
-                                    modifier = Modifier.height(50.dp),
+                                    modifier = Modifier.height(60.dp),
                                     factory = {
                                         val view = View.inflate(
                                             it,

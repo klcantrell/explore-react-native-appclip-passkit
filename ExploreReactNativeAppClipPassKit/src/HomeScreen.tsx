@@ -122,6 +122,8 @@ const Section: React.FC<
                 ),
               );
             } catch (error) {
+              const defaultErrorMessage =
+                'Something went haywire. Please try again later.';
               if (isWalletManagerError(error)) {
                 let message =
                   'Something went really wrong downloading the pass. Please check your internet connection and try again';
@@ -134,9 +136,12 @@ const Section: React.FC<
                       'Could not fetch your pass. Please check your internet connection and try again.';
                     break;
                   default:
+                    message = defaultErrorMessage;
                     break;
                 }
                 setError(message);
+              } else {
+                setError(defaultErrorMessage);
               }
             }
           }}
