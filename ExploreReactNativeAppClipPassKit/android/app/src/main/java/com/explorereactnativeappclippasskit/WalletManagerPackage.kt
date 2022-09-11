@@ -9,7 +9,7 @@ import com.facebook.react.uimanager.ViewManager
 
 class WalletManagerPackage: ReactPackage {
     override fun createNativeModules(reactContext: ReactApplicationContext): MutableList<NativeModule> {
-        return mutableListOf(WalletManager(reactContext))
+        return mutableListOf(RNWalletManager(reactContext))
     }
 
     override fun createViewManagers(reactContext: ReactApplicationContext): MutableList<ViewManager<View, ReactShadowNode<*>>> {

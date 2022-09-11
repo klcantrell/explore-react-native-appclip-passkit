@@ -1,6 +1,7 @@
 import React, { useEffect, useState, type PropsWithChildren } from 'react';
 import {
   Button,
+  Platform,
   SafeAreaView,
   StatusBar,
   StyleSheet,
@@ -9,13 +10,13 @@ import {
   View,
 } from 'react-native';
 import { Colors } from 'react-native/Libraries/NewAppScreen';
-
 import AddPassButton from './AddPassButton';
 
 import { RootStackRoutes, type RootStackScreenProps } from './navigation';
-import walletManager, { isWalletManagerError } from './walletManager';
+import WalletManager, { isWalletManagerError } from './WalletManager';
 
-const PASS_SERIAL_NUMBER = 'analternateserialnumber'; // alt. bgsksfuioa
+const APPLE_PASS_IDENTIFIER = 'pass.com.kalalau.free-thing';
+const APPLE_PASS_SERIAL_NUMBER = 'analternateserialnumber'; // alt. bgsksfuioa
 
 const HomeScreen = (props: RootStackScreenProps<RootStackRoutes.Home>) => {
   const isDarkMode = useColorScheme() === 'dark';
@@ -56,11 +57,22 @@ const Section: React.FC<
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    walletManager
-      .hasPass('pass.com.kalalau.free-thing', PASS_SERIAL_NUMBER)
-      .then((result) => {
+    if (Platform.OS === 'ios') {
+      WalletManager.hasPass(
+        APPLE_PASS_IDENTIFIER,
+        APPLE_PASS_SERIAL_NUMBER,
+      ).then((result) => {
         setHasPass(result);
       });
+    } else if (Platform.OS === 'android') {
+      WalletManager.isGoogleWalletApiAvailable().then((result) => {
+        if (result) {
+          console.log('Google Wallet APIs are available!');
+        } else {
+          console.log('Google Wallet APIs are not available...');
+        }
+      });
+    }
   });
 
   if (error) {
@@ -95,15 +107,15 @@ const Section: React.FC<
       {hasPass ? (
         <>
           <Text>
-            {`You already have a pass: \n\n\tpassIdentifier: pass.com.kalalau.free-thing \n\tserialNumber: ${PASS_SERIAL_NUMBER}`}
+            {`You already have a pass: \n\n\tpassIdentifier: ${APPLE_PASS_IDENTIFIER} \n\tserialNumber: ${APPLE_PASS_SERIAL_NUMBER}`}
           </Text>
           <View style={{ height: 30 }} />
           <Button
             title="Open it"
             onPress={() => {
-              walletManager.openPass(
-                'pass.com.kalalau.free-thing',
-                PASS_SERIAL_NUMBER,
+              WalletManager.openPass(
+                APPLE_PASS_IDENTIFIER,
+                APPLE_PASS_SERIAL_NUMBER,
               );
             }}
           />
@@ -112,13 +124,15 @@ const Section: React.FC<
         <AddPassButton
           onPress={async () => {
             try {
-              await walletManager.downloadWalletPassFromUrl(
-                'http://localhost:3000/applepass',
+              await WalletManager.downloadWalletPassFromUrl(
+                `http://localhost:3000/${
+                  Platform.OS === 'ios' ? 'applepass' : 'androidpassjwt'
+                }`,
               );
               setHasPass(
-                await walletManager.hasPass(
-                  'pass.com.kalalau.free-thing',
-                  PASS_SERIAL_NUMBER,
+                await WalletManager.hasPass(
+                  APPLE_PASS_IDENTIFIER,
+                  APPLE_PASS_SERIAL_NUMBER,
                 ),
               );
             } catch (error) {

@@ -1,4 +1,14 @@
-import { Pressable, requireNativeComponent, ViewProps } from 'react-native';
+import React from 'react';
+import {
+  Pressable,
+  requireNativeComponent,
+  View,
+  ViewProps,
+  ViewStyle,
+} from 'react-native';
+
+const DEFAULT_WIDTH = 275;
+const DEFAULT_HEIGHT = 60;
 
 interface NativeProps extends ViewProps {}
 
@@ -14,12 +24,31 @@ export default function AddPassButton({
   style,
   ...props
 }: Props) {
+  const _style = style as ViewStyle | undefined;
   return (
-    <Pressable onPress={onPress}>
+    <View
+      style={{
+        position: 'relative',
+        width: _style?.width ?? DEFAULT_WIDTH,
+        height: _style?.height ?? DEFAULT_HEIGHT,
+      }}>
       <NativeAddPassButton
-        style={[{ width: 275, height: 60 }, style]}
+        style={[{ width: DEFAULT_WIDTH, height: DEFAULT_HEIGHT }, style]}
         {...props}
       />
-    </Pressable>
+      {/* covering the native component is a workaround on Android until I find a way to handle */}
+      {/* press events. Currently, press events fail on the native side with the following error */}
+      {/* com.facebook.react.bridge.ReactNoCrashSoftException: Cannot find EventEmitter for receivedTouches */}
+      <Pressable
+        onPress={onPress}
+        style={{
+          position: 'absolute',
+          top: 0,
+          right: 0,
+          bottom: 0,
+          left: 0,
+        }}
+      />
+    </View>
   );
 }

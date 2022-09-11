@@ -58,7 +58,6 @@ dependencies {
     // [Compose] Update system UI (status bar, action bar, navigation bar)
     implementation("com.google.accompanist:accompanist-systemuicontroller:0.25.1")
     implementation("androidx.compose.runtime:runtime-livedata:1.2.1")
-    implementation("com.google.android.gms:play-services-pay:16.0.3")
 
     testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test.ext:junit:1.1.3")
