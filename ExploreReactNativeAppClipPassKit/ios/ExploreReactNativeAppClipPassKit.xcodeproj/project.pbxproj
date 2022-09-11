@@ -26,6 +26,8 @@
 		E58C3B6728BF0170001931D9 /* WalletManagerBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = E58C3B6628BF0170001931D9 /* WalletManagerBridge.m */; };
 		E58C3B6928BF066F001931D9 /* WalletManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = E58C3B6828BF066F001931D9 /* WalletManager.swift */; };
 		E58C3B6A28BF066F001931D9 /* WalletManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = E58C3B6828BF066F001931D9 /* WalletManager.swift */; };
+		E5C7F8DE28CD5EB000C71C7B /* AddPassButtonManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = E5C7F8DD28CD5EB000C71C7B /* AddPassButtonManager.swift */; };
+		E5C7F8E228CD605700C71C7B /* AddPassButtonManager.m in Sources */ = {isa = PBXBuildFile; fileRef = E5C7F8E128CD605700C71C7B /* AddPassButtonManager.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -91,6 +93,8 @@
 		E539B61228BA8989009A154D /* ExploreReactNativeAppClipPassKit.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; name = ExploreReactNativeAppClipPassKit.entitlements; path = ExploreReactNativeAppClipPassKit/ExploreReactNativeAppClipPassKit.entitlements; sourceTree = "<group>"; };
 		E58C3B6628BF0170001931D9 /* WalletManagerBridge.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = WalletManagerBridge.m; sourceTree = "<group>"; };
 		E58C3B6828BF066F001931D9 /* WalletManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WalletManager.swift; sourceTree = "<group>"; };
+		E5C7F8DD28CD5EB000C71C7B /* AddPassButtonManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddPassButtonManager.swift; sourceTree = "<group>"; };
+		E5C7F8E128CD605700C71C7B /* AddPassButtonManager.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AddPassButtonManager.m; sourceTree = "<group>"; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
 
@@ -154,6 +158,8 @@
 				E50A960C28BEFADE000FA49C /* ExploreReactNativeAppClipPassKit-Bridging-Header.h */,
 				E58C3B6628BF0170001931D9 /* WalletManagerBridge.m */,
 				E58C3B6828BF066F001931D9 /* WalletManager.swift */,
+				E5C7F8DD28CD5EB000C71C7B /* AddPassButtonManager.swift */,
+				E5C7F8E128CD605700C71C7B /* AddPassButtonManager.m */,
 			);
 			name = ExploreReactNativeAppClipPassKit;
 			sourceTree = "<group>";
@@ -549,6 +555,8 @@
 			buildActionMask = 2147483647;
 			files = (
 				E58C3B6928BF066F001931D9 /* WalletManager.swift in Sources */,
+				E5C7F8DE28CD5EB000C71C7B /* AddPassButtonManager.swift in Sources */,
+				E5C7F8E228CD605700C71C7B /* AddPassButtonManager.m in Sources */,
 				E58C3B6728BF0170001931D9 /* WalletManagerBridge.m in Sources */,
 				E50A960E28BEFADE000FA49C /* RNWalletManager.swift in Sources */,
 				13B07FBC1A68108700A75B9A /* AppDelegate.mm in Sources */,

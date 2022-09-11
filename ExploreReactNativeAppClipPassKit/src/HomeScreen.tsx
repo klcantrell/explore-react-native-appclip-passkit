@@ -10,6 +10,8 @@ import {
 } from 'react-native';
 import { Colors } from 'react-native/Libraries/NewAppScreen';
 
+import AddPassButton from './AddPassButton';
+
 import { RootStackRoutes, type RootStackScreenProps } from './navigation';
 import walletManager, { isWalletManagerError } from './walletManager';
 
@@ -107,8 +109,7 @@ const Section: React.FC<
           />
         </>
       ) : (
-        <Button
-          title="Give me a free thing"
+        <AddPassButton
           onPress={async () => {
             try {
               await walletManager.downloadWalletPassFromUrl(
