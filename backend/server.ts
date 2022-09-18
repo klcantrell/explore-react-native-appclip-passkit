@@ -31,7 +31,7 @@ const classId = "pass.com.explorereactnativeappclippasskit";
  * userId - Developer-defined ID for the user, such as an email address
  *        - Environment variable: WALLET_USER_ID
  */
-const userId = "testUser123";
+const userId = "testUser7";
 
 /*
  * objectId - ID for the wallet object
@@ -87,7 +87,7 @@ app.get("/androidpass", async (req: Request, res: Response) => {
     id: objectId,
     classId: `${issuerId}.${classId}`,
     accountId: userId,
-    accountName: "Kal Cantrell",
+    accountName: "Kal",
     state: "active",
     loyaltyPoints: {
       balance: {
@@ -139,8 +139,9 @@ app.get("/androidpassjwt", async (req: Request, res: Response) => {
     id: objectId,
     classId: `${issuerId}.${classId}`,
     accountId: userId,
-    accountName: "Kal Cantrell",
+    accountName: "Kal7",
     state: "active",
+
     loyaltyPoints: {
       balance: {
         int: "47",
@@ -206,6 +207,15 @@ app.get("/androidpassjwt", async (req: Request, res: Response) => {
   res.json({
     passJwt: token,
   });
+});
+
+app.get("/androidpass/:id", async (req: Request, res: Response) => {
+  const objectUrl = `https://walletobjects.googleapis.com/walletobjects/v1/loyaltyObject/${req.params.id}`;
+  const response = await httpClient.request({
+    url: objectUrl,
+    method: "GET",
+  });
+  res.json(response);
 });
 
 app.listen(port, () => {

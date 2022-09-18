@@ -44,6 +44,6 @@ class AddPassButtonManager : SimpleViewManager<AddButtonView>() {
 
 class AddButtonView(context: Context) : FrameLayout(context) {
     init {
-        inflate(context, R.layout.add_to_google_wallet_button, this)
+        inflate(context, R.layout.rn_add_to_google_wallet_button, this)
     }
 }

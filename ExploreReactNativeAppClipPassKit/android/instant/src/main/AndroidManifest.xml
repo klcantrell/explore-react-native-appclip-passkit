@@ -37,6 +37,9 @@
                     android:host="explorereactnativeappclippasskit.kalalau.dev"
                     android:scheme="https" />
             </intent-filter>
+            <meta-data
+                android:name="default-url"
+                android:value="https://explorereactnativeappclippasskit.kalalau.dev" />
         </activity>
 
         <!-- This element is required in order to use the PaymentsClient -->

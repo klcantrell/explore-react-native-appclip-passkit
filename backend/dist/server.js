@@ -37,7 +37,7 @@ const classId = "pass.com.explorereactnativeappclippasskit";
  * userId - Developer-defined ID for the user, such as an email address
  *        - Environment variable: WALLET_USER_ID
  */
-const userId = "testUser123";
+const userId = "testUser7";
 /*
  * objectId - ID for the wallet object
  *          - Format: `issuerId.identifier`
@@ -85,7 +85,7 @@ app.get("/androidpass", (req, res) => __awaiter(void 0, void 0, void 0, function
         id: objectId,
         classId: `${issuerId}.${classId}`,
         accountId: userId,
-        accountName: "Kal Cantrell",
+        accountName: "Kal",
         state: "active",
         loyaltyPoints: {
             balance: {
@@ -133,7 +133,7 @@ app.get("/androidpassjwt", (req, res) => __awaiter(void 0, void 0, void 0, funct
         id: objectId,
         classId: `${issuerId}.${classId}`,
         accountId: userId,
-        accountName: "Kal Cantrell",
+        accountName: "Kal7",
         state: "active",
         loyaltyPoints: {
             balance: {
@@ -195,6 +195,14 @@ app.get("/androidpassjwt", (req, res) => __awaiter(void 0, void 0, void 0, funct
     res.json({
         passJwt: token,
     });
+}));
+app.get("/androidpass/:id", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const objectUrl = `https://walletobjects.googleapis.com/walletobjects/v1/loyaltyObject/${req.params.id}`;
+    const response = yield httpClient.request({
+        url: objectUrl,
+        method: "GET",
+    });
+    res.json(response);
 }));
 app.listen(port, () => {
     console.log(`Server is running at https://localhost:${port}`);

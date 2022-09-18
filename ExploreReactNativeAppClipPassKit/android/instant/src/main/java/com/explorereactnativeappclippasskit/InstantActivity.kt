@@ -91,17 +91,17 @@ private val newObjectJson = """
                             "value": "cantrellkalalau@gmail.com"
                         }
                     },
-                    "multipleDevicesAndHoldersAllowedStatus": "oneUserOneDevice"
+                    "multipleDevicesAndHoldersAllowedStatus": "oneUserAllDevices"
                 },
-                "accountName": "Kal Cantrell",
-                "accountId": "testUser123",
+                "accountName": "Kal7",
+                "accountId": "testUser7",
                 "loyaltyPoints": {
                     "label": "Bottles Avoided",
                     "balance": {
                         "int": 47
                     }
                 },
-                "id": "3388000000022130058.testUser123-pass.com.explorereactnativeappclippasskit",
+                "id": "3388000000022130058.testUser7-pass.com.explorereactnativeappclippasskit",
                 "classId": "3388000000022130058.pass.com.explorereactnativeappclippasskit",
                 "version": "1",
                 "state": "active",
@@ -119,7 +119,7 @@ private val newObjectJson = """
     """
 
 // loyalty JWT below is hard-coded response that would come from a backend endpoint
-private const val newObjectJwt = "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJ3YWxsZXQtc3Bpa2Utd2ViLWNsaWVudEB3YWxsZXQtc3Bpa2Utd2ViLWNsaWVudC5pYW0uZ3NlcnZpY2VhY2NvdW50LmNvbSIsImF1ZCI6Imdvb2dsZSIsIm9yaWdpbnMiOlsibG9jYWxob3N0OjMwMDAiXSwidHlwIjoic2F2ZXRvd2FsbGV0IiwicGF5bG9hZCI6eyJsb3lhbHR5T2JqZWN0cyI6W3siaWQiOiIzMzg4MDAwMDAwMDIyMTMwMDU4LnRlc3RVc2VyMTIzLXBhc3MuY29tLmV4cGxvcmVyZWFjdG5hdGl2ZWFwcGNsaXBwYXNza2l0In1dfSwiaWF0IjoxNjYyODMxNjc0fQ.IcBIEaejsDtXqH_Sda3zEm8_DMb2XCxIcD6hfa13zfDW7f88HKJcx6XkZsSzQrtAuRtXMSVqIO0LrphulpJ5DBZ41vjcA7x9A2Kq0u0NPDok2XLAqA8pwbnNnmZ_w0NNHMaOct9kOxJxWEJs_Xjdh6yTYYwkLyJ32xfmOxs9lmCTwe_SaEEenF0Ghe55hV3gY_1GfxA8w6-F364yz_Znhgn8ewlpvhIx5V6xv2Ag-4Lze7r0Lg815l-4F7MyrkmCI5NtdyYyurWFOAmS8sEiL55a0pgWEojXHGI2cQZCZZqox2WgRd04xdWpGtWU85v2dX9DRsf4FHDbR26OZJ1n8w"
+private const val newObjectJwt = "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJ3YWxsZXQtc3Bpa2Utd2ViLWNsaWVudEB3YWxsZXQtc3Bpa2Utd2ViLWNsaWVudC5pYW0uZ3NlcnZpY2VhY2NvdW50LmNvbSIsImF1ZCI6Imdvb2dsZSIsIm9yaWdpbnMiOlsibG9jYWxob3N0OjMwMDAiXSwidHlwIjoic2F2ZXRvd2FsbGV0IiwicGF5bG9hZCI6eyJsb3lhbHR5T2JqZWN0cyI6W3siaWQiOiIzMzg4MDAwMDAwMDIyMTMwMDU4LnRlc3RVc2VyNy1wYXNzLmNvbS5leHBsb3JlcmVhY3RuYXRpdmVhcHBjbGlwcGFzc2tpdCJ9XX0sImlhdCI6MTY2MzUyNzEwM30.h_fY7m0Vi-AtmD9B4AfHHhcBsSoT0G5RcEMx79__jRp6ryIFoSL8goRV64X1Bk16gjl7yAofX7VEV9qlPmmDsL0PcDFdV2qvIqjeB31R11SLtCAflz5SexmID0vmNNP7Z9QFft0HrknDkSwXRIHk8IceKtJMwYOnCzkxsSCKTN0L_HCNgUbnPMEuA54k6IfKG3vufhcLxoE8van4anXzOPNfHfxXUGT5iRSvY9ScOslvhOjY0VETMjBw5on30LBtbmFNgFb4UpXMvy2EhZaW-brEi_4V0zUcVeOxw41kznzIh2pkbjlE5Gu3WnuDy1FimY0VgFBFA75uifqWIPYA5Q"
 
 class InstantActivity : AppCompatActivity() {
     private lateinit var walletClient: PayClient
