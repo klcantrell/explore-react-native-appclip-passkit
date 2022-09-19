@@ -31,7 +31,7 @@ const classId = "pass.com.explorereactnativeappclippasskit";
  * userId - Developer-defined ID for the user, such as an email address
  *        - Environment variable: WALLET_USER_ID
  */
-const userId = "testUser7";
+const userId = "testUser12";
 
 /*
  * objectId - ID for the wallet object
@@ -87,7 +87,7 @@ app.get("/androidpass", async (req: Request, res: Response) => {
     id: objectId,
     classId: `${issuerId}.${classId}`,
     accountId: userId,
-    accountName: "Kal",
+    accountName: "Kal12",
     state: "active",
     loyaltyPoints: {
       balance: {
@@ -139,7 +139,7 @@ app.get("/androidpassjwt", async (req: Request, res: Response) => {
     id: objectId,
     classId: `${issuerId}.${classId}`,
     accountId: userId,
-    accountName: "Kal7",
+    accountName: "Kal12",
     state: "active",
 
     loyaltyPoints: {
