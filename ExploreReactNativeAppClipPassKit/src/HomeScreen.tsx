@@ -1,6 +1,7 @@
 import React, { useEffect, useState, type PropsWithChildren } from 'react';
 import {
   Button,
+  Image,
   Platform,
   SafeAreaView,
   StatusBar,
@@ -14,6 +15,13 @@ import AddPassButton from './AddPassButton';
 
 import { RootStackRoutes, type RootStackScreenProps } from './navigation';
 import WalletManager, { isWalletManagerError } from './WalletManager';
+
+import {
+  GoogleSignin,
+  GoogleSigninButton,
+  statusCodes as GoogleSigninStatusCodes,
+  User as GoogleUser,
+} from '@react-native-google-signin/google-signin';
 
 const APPLE_PASS_IDENTIFIER = 'pass.com.kalalau.free-thing';
 const APPLE_PASS_SERIAL_NUMBER = 'analternateserialnumber'; // alt. bgsksfuioa
@@ -36,10 +44,10 @@ const HomeScreen = (props: RootStackScreenProps<RootStackRoutes.Home>) => {
           paddingHorizontal: 30,
           backgroundColor: isDarkMode ? Colors.black : Colors.white,
         }}>
-        <Section title="Home Screen">
+        <HomeScreenContent title="Home Screen">
           Edit <Text style={styles.highlight}>App.tsx</Text> to change this
           screen and then come back to see your edits.
-        </Section>
+        </HomeScreenContent>
       </View>
     </SafeAreaView>
   );
@@ -47,14 +55,16 @@ const HomeScreen = (props: RootStackScreenProps<RootStackRoutes.Home>) => {
 
 export default HomeScreen;
 
-const Section: React.FC<
+const HomeScreenContent: React.FC<
   PropsWithChildren<{
     title: string;
   }>
 > = ({ children, title }) => {
   const isDarkMode = useColorScheme() === 'dark';
-  const [hasPass, setHasPass] = useState(false);
+  const [hasApplePass, setHasApplePass] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [googleSigninInProgress, setGoogleSigninInProgress] = useState(false);
+  const [googleUser, setGoogleUser] = useState<GoogleUser | null>(null);
 
   useEffect(() => {
     if (Platform.OS === 'ios') {
@@ -62,7 +72,7 @@ const Section: React.FC<
         APPLE_PASS_IDENTIFIER,
         APPLE_PASS_SERIAL_NUMBER,
       ).then((result) => {
-        setHasPass(result);
+        setHasApplePass(result);
       });
     } else if (Platform.OS === 'android') {
       WalletManager.isGoogleWalletApiAvailable().then((result) => {
@@ -73,7 +83,15 @@ const Section: React.FC<
         }
       });
     }
-  });
+  }, []);
+
+  useEffect(() => {
+    async function checkGoogleSignin() {
+      console.log('GoogleSignin.isSignedIn()', await GoogleSignin.isSignedIn());
+    }
+
+    checkGoogleSignin();
+  }, []);
 
   if (error) {
     return (
@@ -85,26 +103,28 @@ const Section: React.FC<
 
   return (
     <View>
-      <Text
-        style={[
-          styles.sectionTitle,
-          {
-            color: isDarkMode ? Colors.white : Colors.black,
-          },
-        ]}>
-        {title}
-      </Text>
-      <Text
-        style={[
-          styles.sectionDescription,
-          {
-            color: isDarkMode ? Colors.light : Colors.dark,
-          },
-        ]}>
-        {children}
-      </Text>
-      <View style={{ height: 30 }} />
-      {hasPass ? (
+      <View style={{ borderBottomWidth: 1, paddingBottom: 16 }}>
+        <Text
+          style={[
+            styles.sectionTitle,
+            {
+              color: isDarkMode ? Colors.white : Colors.black,
+            },
+          ]}>
+          {title}
+        </Text>
+        <Text
+          style={[
+            styles.sectionDescription,
+            {
+              color: isDarkMode ? Colors.light : Colors.dark,
+            },
+          ]}>
+          {children}
+        </Text>
+      </View>
+      <Text style={{ marginVertical: 16 }}>Apple Wallet</Text>
+      {hasApplePass ? (
         <>
           <Text>
             {`You already have a pass: \n\n\tpassIdentifier: ${APPLE_PASS_IDENTIFIER} \n\tserialNumber: ${APPLE_PASS_SERIAL_NUMBER}`}
@@ -122,6 +142,7 @@ const Section: React.FC<
         </>
       ) : (
         <AddPassButton
+          style={{ alignSelf: 'center' }}
           onPress={async () => {
             try {
               await WalletManager.downloadWalletPassFromUrl(
@@ -129,7 +150,7 @@ const Section: React.FC<
                   Platform.OS === 'ios' ? 'applepass' : 'androidpassjwt'
                 }`,
               );
-              setHasPass(
+              setHasApplePass(
                 await WalletManager.hasPass(
                   APPLE_PASS_IDENTIFIER,
                   APPLE_PASS_SERIAL_NUMBER,
@@ -161,9 +182,81 @@ const Section: React.FC<
           }}
         />
       )}
+      <View style={{ borderTopWidth: 1, marginTop: 16 }}>
+        <Text style={{ marginVertical: 16 }}>Google Sign in</Text>
+        <GoogleSigninButton
+          style={{
+            width: 192,
+            alignSelf: 'center',
+          }}
+          size={GoogleSigninButton.Size.Wide}
+          color={GoogleSigninButton.Color.Dark}
+          onPress={async () => {
+            setGoogleSigninInProgress(true);
+            const googleUser = await signInWithGoogle();
+            setGoogleUser(googleUser);
+          }}
+          disabled={googleSigninInProgress}
+        />
+        {googleUser !== null ? (
+          <View style={{ marginTop: 16, alignItems: 'center' }}>
+            <Text>Logged in as: {googleUser.user.name}</Text>
+            {googleUser.user.photo !== null ? (
+              <Image
+                resizeMode="cover"
+                style={{
+                  width: 80,
+                  height: 80,
+                  borderRadius: 9999,
+                  marginTop: 8,
+                }}
+                source={{ uri: googleUser.user.photo }}
+              />
+            ) : null}
+          </View>
+        ) : null}
+      </View>
     </View>
   );
 };
+
+async function signInWithGoogle(): Promise<GoogleUser | null> {
+  try {
+    await GoogleSignin.hasPlayServices();
+    console.log(
+      'GoogleSignin.hasPlayServices()',
+      await GoogleSignin.hasPlayServices(),
+    );
+    const userInfo = await GoogleSignin.signIn();
+    console.log('GoogleSignin userInfo', userInfo);
+    return userInfo;
+  } catch (error) {
+    if (isGoogleSigninError(error)) {
+      if (error.code === GoogleSigninStatusCodes.SIGN_IN_CANCELLED) {
+        console.log('user cancelled the login flow');
+      } else if (error.code === GoogleSigninStatusCodes.IN_PROGRESS) {
+        console.log('operation (e.g. sign in) is in progress already');
+      } else if (
+        error.code === GoogleSigninStatusCodes.PLAY_SERVICES_NOT_AVAILABLE
+      ) {
+        console.log('play services not available or outdated');
+      } else {
+        console.log('some other error happened');
+      }
+    } else {
+      console.log('not a Google signin error');
+    }
+    return null;
+  }
+}
+
+interface GoogleSigninError {
+  code: any;
+}
+
+function isGoogleSigninError(error: unknown): error is GoogleSigninError {
+  return error != null && (error as GoogleSigninError).code != null;
+}
 
 const styles = StyleSheet.create({
   sectionTitle: {

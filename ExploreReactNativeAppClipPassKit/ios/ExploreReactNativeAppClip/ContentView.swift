@@ -6,7 +6,7 @@ struct ContentView: View {
   let walletManager: WalletManager
 
   private let APP_GROUP = "group.com.kalalau.explore.ReactNativeAppClipPassKit";
-  private let PASS_ID = "PASS_ID"
+  private let KEY_PASS_ID = "PASS_ID"
 
   @State var alreadyHasPass: Bool? = nil
   @State var fetchedPass: PKPass? = nil
@@ -35,7 +35,7 @@ struct ContentView: View {
                     onSuccess: { (pass: PKPass) in
                       alreadyHasPass = true
                       if let defaults = UserDefaults(suiteName: APP_GROUP) {
-                        defaults.set(pass.serialNumber, forKey: PASS_ID)
+                        defaults.set(pass.serialNumber, forKey: KEY_PASS_ID)
                       }
                     }, onFailure: { _ in
                       errorMessage = "Could not download your pass. Please check your internet connection and try again."
@@ -51,14 +51,14 @@ struct ContentView: View {
     }
     .onAppear {
       if let defaults = UserDefaults(suiteName: APP_GROUP),
-         let passId = defaults.string(forKey: PASS_ID) {
+         let passId = defaults.string(forKey: KEY_PASS_ID) {
         do {
           try walletManager.hasPass(url: "http://localhost:3000/applepass/\(passId)") { (hasPass, pass) in
             if let pass = pass {
               if !hasPass {
                 fetchedPass = pass
               }
-              defaults.set(pass.serialNumber, forKey: PASS_ID)
+              defaults.set(pass.serialNumber, forKey: KEY_PASS_ID)
             }
 
             alreadyHasPass = hasPass

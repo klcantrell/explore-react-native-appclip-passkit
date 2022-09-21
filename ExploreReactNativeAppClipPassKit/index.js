@@ -1,6 +1,9 @@
-import {AppRegistry} from 'react-native';
+import { GoogleSignin } from '@react-native-google-signin/google-signin';
+import { AppRegistry } from 'react-native';
 
-import {name as appName} from './app.json';
+GoogleSignin.configure();
+
+import { name as appName } from './app.json';
 import App from './src/App';
 
 AppRegistry.registerComponent(appName, () => App);

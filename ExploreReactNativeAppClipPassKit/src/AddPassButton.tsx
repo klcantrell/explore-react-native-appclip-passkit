@@ -31,6 +31,7 @@ export default function AddPassButton({
         position: 'relative',
         width: _style?.width ?? DEFAULT_WIDTH,
         height: _style?.height ?? DEFAULT_HEIGHT,
+        alignSelf: _style?.alignSelf ?? 'auto',
       }}>
       <NativeAddPassButton
         style={[{ width: DEFAULT_WIDTH, height: DEFAULT_HEIGHT }, style]}
