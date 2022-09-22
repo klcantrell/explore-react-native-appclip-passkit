@@ -1,6 +1,7 @@
 import SwiftUI
 import UIKit
 import PassKit
+import AuthenticationServices
 
 struct ContentView: View {
   let walletManager: WalletManager
@@ -43,6 +44,9 @@ struct ContentView: View {
                 }
               }
               .frame(width: 275, height: 60)
+            AppleSignInButton()
+              .frame(width: 275, height: 60)
+              .padding()
           }
         } else {
           ProgressView().frame(height: 40)
@@ -76,11 +80,22 @@ struct ContentView: View {
 struct AddPassButton: UIViewRepresentable {
   typealias UIViewType = PKAddPassButton
 
-  func makeUIView(context: Context) -> PKAddPassButton {
+  func makeUIView(context: Context) -> UIViewType {
     return PKAddPassButton()
   }
 
-  func updateUIView(_ uiView: PKAddPassButton, context: Context) {
+  func updateUIView(_ uiView: UIViewType, context: Context) {
+  }
+}
+
+struct AppleSignInButton: UIViewRepresentable {
+  typealias UIViewType = ASAuthorizationAppleIDButton
+
+  func makeUIView(context: Context) -> UIViewType {
+    return ASAuthorizationAppleIDButton()
+  }
+
+  func updateUIView(_ uiView: UIViewType, context: Context) {
   }
 }
 
