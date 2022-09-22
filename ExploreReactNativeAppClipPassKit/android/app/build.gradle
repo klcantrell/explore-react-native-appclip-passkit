@@ -139,7 +139,7 @@ android {
         applicationId "com.explorereactnativeappclippasskit"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 12
+        versionCode 200
         versionName "1.0"
         buildConfigField "boolean", "IS_NEW_ARCHITECTURE_ENABLED", isNewArchitectureEnabled().toString()
 
@@ -269,6 +269,7 @@ dependencies {
     implementation 'androidx.core:core-ktx:1.7.0'
     implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
     api 'com.google.android.gms:play-services-pay:16.0.3' // use api so that instant app can access this dependency as well
+    implementation "com.google.android.gms:play-services-instantapps:17.0.0"
 
     debugImplementation("com.facebook.flipper:flipper:${FLIPPER_VERSION}") {
         exclude group:'com.facebook.fbjni'

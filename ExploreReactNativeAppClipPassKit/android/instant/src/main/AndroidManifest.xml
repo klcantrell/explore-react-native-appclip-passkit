@@ -2,14 +2,13 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:dist="http://schemas.android.com/apk/distribution"
     package="com.explorereactnativeappclippasskit"
-    android:targetSandboxVersion="2">
+    android:targetSandboxVersion="2"
+    android:versionCode="20">
 
     <dist:module
         dist:instant="true"
+        dist:onDemand="false"
         dist:title="@string/title_instant">
-        <dist:delivery>
-            <dist:install-time />
-        </dist:delivery>
         <dist:fusing dist:include="false" />
     </dist:module>
 
