@@ -1,3 +1,14 @@
+import {
+  appleAuth,
+  AppleButton,
+  AppleRequestResponse,
+} from '@invertase/react-native-apple-authentication';
+import {
+  GoogleSignin,
+  GoogleSigninButton,
+  statusCodes as GoogleSigninStatusCodes,
+  User as GoogleUser,
+} from '@react-native-google-signin/google-signin';
 import React, { useEffect, useState, type PropsWithChildren } from 'react';
 import {
   Button,
@@ -11,17 +22,11 @@ import {
   View,
 } from 'react-native';
 import { Colors } from 'react-native/Libraries/NewAppScreen';
-import AddPassButton from './AddPassButton';
 
+import AddPassButton from './AddPassButton';
+import cache, { AppleUser } from './cache';
 import { RootStackRoutes, type RootStackScreenProps } from './navigation';
 import WalletManager, { isWalletManagerError } from './WalletManager';
-
-import {
-  GoogleSignin,
-  GoogleSigninButton,
-  statusCodes as GoogleSigninStatusCodes,
-  User as GoogleUser,
-} from '@react-native-google-signin/google-signin';
 
 const APPLE_PASS_IDENTIFIER = 'pass.com.kalalau.free-thing';
 const APPLE_PASS_SERIAL_NUMBER = 'analternateserialnumber'; // alt. bgsksfuioa
@@ -65,6 +70,8 @@ const HomeScreenContent: React.FC<
   const [error, setError] = useState<string | null>(null);
   const [googleSigninInProgress, setGoogleSigninInProgress] = useState(false);
   const [googleUser, setGoogleUser] = useState<GoogleUser | null>(null);
+  const [appleSigninInProgress, setAppleSigninInProgress] = useState(false);
+  const [appleUser, setAppleUser] = useState<AppleUser | null>(null);
 
   useEffect(() => {
     if (Platform.OS === 'ios') {
@@ -123,7 +130,7 @@ const HomeScreenContent: React.FC<
           {children}
         </Text>
       </View>
-      <Text style={{ marginVertical: 16 }}>Apple Wallet</Text>
+      <Text style={{ marginVertical: 16 }}>Wallet passes</Text>
       {hasApplePass ? (
         <>
           <Text>
@@ -183,21 +190,77 @@ const HomeScreenContent: React.FC<
         />
       )}
       <View style={{ borderTopWidth: 1, marginTop: 16 }}>
-        <Text style={{ marginVertical: 16 }}>Google Sign in</Text>
-        <GoogleSigninButton
-          style={{
-            width: 192,
-            alignSelf: 'center',
-          }}
-          size={GoogleSigninButton.Size.Wide}
-          color={GoogleSigninButton.Color.Dark}
-          onPress={async () => {
-            setGoogleSigninInProgress(true);
-            const googleUser = await signInWithGoogle();
-            setGoogleUser(googleUser);
-          }}
-          disabled={googleSigninInProgress}
-        />
+        <Text style={{ marginVertical: 16 }}>Single sign on</Text>
+        <View style={{ alignItems: 'center' }}>
+          <GoogleSigninButton
+            style={{
+              width: 192,
+              height: 48,
+            }}
+            size={GoogleSigninButton.Size.Wide}
+            color={GoogleSigninButton.Color.Dark}
+            onPress={async () => {
+              setGoogleSigninInProgress(true);
+              const googleUser = await signInWithGoogle();
+              setGoogleUser(googleUser);
+            }}
+            disabled={googleSigninInProgress}
+          />
+          <View style={{ height: 12 }} />
+          {Platform.OS === 'ios' ? (
+            <AppleButton
+              style={{ width: 192, height: 44 }}
+              cornerRadius={5}
+              buttonStyle={
+                appleSigninInProgress
+                  ? AppleButton.Style.WHITE
+                  : AppleButton.Style.BLACK
+              }
+              buttonType={AppleButton.Type.SIGN_IN}
+              onPress={
+                appleSigninInProgress
+                  ? () => {}
+                  : async () => {
+                      setAppleSigninInProgress(true);
+                      const appleAuthResponse = await signInWithApple();
+                      if (appleAuthResponse !== null) {
+                        const appleUserResponse = {
+                          userId: appleAuthResponse.user,
+                          firstName:
+                            appleAuthResponse.fullName?.givenName ?? '',
+                          lastName:
+                            appleAuthResponse.fullName?.familyName ?? '',
+                        };
+                        const cachedAppleUser = cache.getAppleUserById(
+                          appleAuthResponse.user,
+                        );
+                        if (cachedAppleUser !== null) {
+                          const updatedUser = {
+                            ...cachedAppleUser,
+                            firstName:
+                              appleUserResponse.firstName !== ''
+                                ? appleUserResponse.firstName
+                                : cachedAppleUser.firstName,
+                            lastName:
+                              appleUserResponse.lastName !== ''
+                                ? appleUserResponse.lastName
+                                : cachedAppleUser.lastName,
+                          };
+                          setAppleUser(updatedUser);
+                          cache.saveAppleUser(updatedUser);
+                        } else {
+                          setAppleUser(appleUserResponse);
+                          cache.saveAppleUser(appleUserResponse);
+                        }
+                      } else {
+                        setError('Failed to sign in with Apple');
+                      }
+                    }
+              }
+            />
+          ) : null}
+        </View>
+
         {googleUser !== null ? (
           <View style={{ marginTop: 16, alignItems: 'center' }}>
             <Text>Logged in as: {googleUser.user.name}</Text>
@@ -215,6 +278,15 @@ const HomeScreenContent: React.FC<
             ) : null}
           </View>
         ) : null}
+        {appleUser !== null ? (
+          <View style={{ marginTop: 16, alignItems: 'center' }}>
+            <Text>
+              {appleUser.firstName === '' && appleUser.lastName === ''
+                ? `Signed in with Apple (user ${appleUser.userId})`
+                : `Logged in as: ${appleUser.firstName} ${appleUser.lastName}`}
+            </Text>
+          </View>
+        ) : null}
       </View>
     </View>
   );
@@ -230,6 +302,43 @@ async function signInWithGoogle(): Promise<GoogleUser | null> {
     const userInfo = await GoogleSignin.signIn();
     console.log('GoogleSignin userInfo', userInfo);
     return userInfo;
+  } catch (error) {
+    if (isGoogleSigninError(error)) {
+      if (error.code === GoogleSigninStatusCodes.SIGN_IN_CANCELLED) {
+        console.log('user cancelled the login flow');
+      } else if (error.code === GoogleSigninStatusCodes.IN_PROGRESS) {
+        console.log('operation (e.g. sign in) is in progress already');
+      } else if (
+        error.code === GoogleSigninStatusCodes.PLAY_SERVICES_NOT_AVAILABLE
+      ) {
+        console.log('play services not available or outdated');
+      } else {
+        console.log('some other error happened');
+      }
+    } else {
+      console.log('not a Google signin error');
+    }
+    return null;
+  }
+}
+
+async function signInWithApple(): Promise<AppleRequestResponse | null> {
+  try {
+    const appleAuthRequestResponse = await appleAuth.performRequest({
+      requestedOperation: appleAuth.Operation.LOGIN,
+      requestedScopes: [appleAuth.Scope.FULL_NAME, appleAuth.Scope.EMAIL],
+    });
+    const credentialState = await appleAuth.getCredentialStateForUser(
+      appleAuthRequestResponse.user,
+    );
+
+    if (credentialState === appleAuth.State.AUTHORIZED) {
+      console.log('Apple sign in response', appleAuthRequestResponse);
+      return appleAuthRequestResponse;
+    } else {
+      console.log('login failed');
+      return null;
+    }
   } catch (error) {
     if (isGoogleSigninError(error)) {
       if (error.code === GoogleSigninStatusCodes.SIGN_IN_CANCELLED) {
