@@ -15,6 +15,7 @@ import {
   Image,
   Platform,
   SafeAreaView,
+  ScrollView,
   StatusBar,
   StyleSheet,
   Text,
@@ -33,6 +34,7 @@ const APPLE_PASS_SERIAL_NUMBER = 'analternateserialnumber'; // alt. bgsksfuioa
 
 const HomeScreen = (props: RootStackScreenProps<RootStackRoutes.Home>) => {
   const isDarkMode = useColorScheme() === 'dark';
+  const [error, setError] = useState<string | null>(null);
 
   const backgroundStyle = {
     flexGrow: 1,
@@ -42,18 +44,28 @@ const HomeScreen = (props: RootStackScreenProps<RootStackRoutes.Home>) => {
   return (
     <SafeAreaView style={backgroundStyle}>
       <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
-      <View
+      <ScrollView
         style={{
           flexGrow: 1,
+          backgroundColor: isDarkMode ? Colors.black : Colors.white,
+        }}
+        contentContainerStyle={{
           paddingTop: 30,
           paddingHorizontal: 30,
-          backgroundColor: isDarkMode ? Colors.black : Colors.white,
         }}>
+        {error ? (
+          <View>
+            <Text style={styles.sectionTitle}>{error}</Text>
+          </View>
+        ) : null}
         <HomeScreenContent title="Home Screen">
           Edit <Text style={styles.highlight}>App.tsx</Text> to change this
           screen and then come back to see your edits.
         </HomeScreenContent>
-      </View>
+        <WalletPasses updateError={setError} />
+        <SingleSignOn updateError={setError} />
+        <PaymentsWithStripe updateError={setError} />
+      </ScrollView>
     </SafeAreaView>
   );
 };
@@ -66,47 +78,6 @@ const HomeScreenContent: React.FC<
   }>
 > = ({ children, title }) => {
   const isDarkMode = useColorScheme() === 'dark';
-  const [hasApplePass, setHasApplePass] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [googleSigninInProgress, setGoogleSigninInProgress] = useState(false);
-  const [googleUser, setGoogleUser] = useState<GoogleUser | null>(null);
-  const [appleSigninInProgress, setAppleSigninInProgress] = useState(false);
-  const [appleUser, setAppleUser] = useState<AppleUser | null>(null);
-
-  useEffect(() => {
-    if (Platform.OS === 'ios') {
-      WalletManager.hasPass(
-        APPLE_PASS_IDENTIFIER,
-        APPLE_PASS_SERIAL_NUMBER,
-      ).then((result) => {
-        setHasApplePass(result);
-      });
-    } else if (Platform.OS === 'android') {
-      WalletManager.isGoogleWalletApiAvailable().then((result) => {
-        if (result) {
-          console.log('Google Wallet APIs are available!');
-        } else {
-          console.log('Google Wallet APIs are not available...');
-        }
-      });
-    }
-  }, []);
-
-  useEffect(() => {
-    async function checkGoogleSignin() {
-      console.log('GoogleSignin.isSignedIn()', await GoogleSignin.isSignedIn());
-    }
-
-    checkGoogleSignin();
-  }, []);
-
-  if (error) {
-    return (
-      <View>
-        <Text style={styles.sectionTitle}>{error}</Text>
-      </View>
-    );
-  }
 
   return (
     <View>
@@ -130,6 +101,38 @@ const HomeScreenContent: React.FC<
           {children}
         </Text>
       </View>
+    </View>
+  );
+};
+
+function WalletPasses({
+  updateError,
+}: {
+  updateError: React.Dispatch<React.SetStateAction<string | null>>;
+}) {
+  const [hasApplePass, setHasApplePass] = useState(false);
+
+  useEffect(() => {
+    if (Platform.OS === 'ios') {
+      WalletManager.hasPass(
+        APPLE_PASS_IDENTIFIER,
+        APPLE_PASS_SERIAL_NUMBER,
+      ).then((result) => {
+        setHasApplePass(result);
+      });
+    } else if (Platform.OS === 'android') {
+      WalletManager.isGoogleWalletApiAvailable().then((result) => {
+        if (result) {
+          console.log('Google Wallet APIs are available!');
+        } else {
+          console.log('Google Wallet APIs are not available...');
+        }
+      });
+    }
+  }, []);
+
+  return (
+    <View>
       <Text style={{ marginVertical: 16 }}>Wallet passes</Text>
       {hasApplePass ? (
         <>
@@ -181,116 +184,148 @@ const HomeScreenContent: React.FC<
                     message = defaultErrorMessage;
                     break;
                 }
-                setError(message);
+                updateError(message);
               } else {
-                setError(defaultErrorMessage);
+                updateError(defaultErrorMessage);
               }
             }
           }}
         />
       )}
-      <View style={{ borderTopWidth: 1, marginTop: 16 }}>
-        <Text style={{ marginVertical: 16 }}>Single sign on</Text>
-        <View style={{ alignItems: 'center' }}>
-          <GoogleSigninButton
-            style={{
-              width: 192,
-              height: 48,
-            }}
-            size={GoogleSigninButton.Size.Wide}
-            color={GoogleSigninButton.Color.Dark}
-            onPress={async () => {
-              setGoogleSigninInProgress(true);
-              const googleUser = await signInWithGoogle();
-              setGoogleUser(googleUser);
-            }}
-            disabled={googleSigninInProgress}
-          />
-          <View style={{ height: 12 }} />
-          {Platform.OS === 'ios' ? (
-            <AppleButton
-              style={{ width: 192, height: 44 }}
-              cornerRadius={5}
-              buttonStyle={
-                appleSigninInProgress
-                  ? AppleButton.Style.WHITE
-                  : AppleButton.Style.BLACK
-              }
-              buttonType={AppleButton.Type.SIGN_IN}
-              onPress={
-                appleSigninInProgress
-                  ? () => {}
-                  : async () => {
-                      setAppleSigninInProgress(true);
-                      const appleAuthResponse = await signInWithApple();
-                      if (appleAuthResponse !== null) {
-                        const appleUserResponse = {
-                          userId: appleAuthResponse.user,
+    </View>
+  );
+}
+
+function SingleSignOn({
+  updateError,
+}: {
+  updateError: React.Dispatch<React.SetStateAction<string | null>>;
+}) {
+  const [googleSigninInProgress, setGoogleSigninInProgress] = useState(false);
+  const [googleUser, setGoogleUser] = useState<GoogleUser | null>(null);
+  const [appleSigninInProgress, setAppleSigninInProgress] = useState(false);
+  const [appleUser, setAppleUser] = useState<AppleUser | null>(null);
+
+  useEffect(() => {
+    async function checkGoogleSignin() {
+      console.log('GoogleSignin.isSignedIn()', await GoogleSignin.isSignedIn());
+    }
+
+    checkGoogleSignin();
+  }, []);
+
+  return (
+    <View style={{ borderTopWidth: 1, marginTop: 16 }}>
+      <Text style={{ marginVertical: 16 }}>Single sign on</Text>
+      <View style={{ alignItems: 'center' }}>
+        <GoogleSigninButton
+          style={{
+            width: 192,
+            height: 48,
+          }}
+          size={GoogleSigninButton.Size.Wide}
+          color={GoogleSigninButton.Color.Dark}
+          onPress={async () => {
+            setGoogleSigninInProgress(true);
+            const googleUser = await signInWithGoogle();
+            setGoogleUser(googleUser);
+          }}
+          disabled={googleSigninInProgress}
+        />
+        <View style={{ height: 12 }} />
+        {Platform.OS === 'ios' ? (
+          <AppleButton
+            style={{ width: 192, height: 44 }}
+            cornerRadius={5}
+            buttonStyle={
+              appleSigninInProgress
+                ? AppleButton.Style.WHITE
+                : AppleButton.Style.BLACK
+            }
+            buttonType={AppleButton.Type.SIGN_IN}
+            onPress={
+              appleSigninInProgress
+                ? () => {}
+                : async () => {
+                    setAppleSigninInProgress(true);
+                    const appleAuthResponse = await signInWithApple();
+                    if (appleAuthResponse !== null) {
+                      const appleUserResponse = {
+                        userId: appleAuthResponse.user,
+                        firstName: appleAuthResponse.fullName?.givenName ?? '',
+                        lastName: appleAuthResponse.fullName?.familyName ?? '',
+                      };
+                      const cachedAppleUser = cache.getAppleUserById(
+                        appleAuthResponse.user,
+                      );
+                      if (cachedAppleUser !== null) {
+                        const updatedUser = {
+                          ...cachedAppleUser,
                           firstName:
-                            appleAuthResponse.fullName?.givenName ?? '',
+                            appleUserResponse.firstName !== ''
+                              ? appleUserResponse.firstName
+                              : cachedAppleUser.firstName,
                           lastName:
-                            appleAuthResponse.fullName?.familyName ?? '',
+                            appleUserResponse.lastName !== ''
+                              ? appleUserResponse.lastName
+                              : cachedAppleUser.lastName,
                         };
-                        const cachedAppleUser = cache.getAppleUserById(
-                          appleAuthResponse.user,
-                        );
-                        if (cachedAppleUser !== null) {
-                          const updatedUser = {
-                            ...cachedAppleUser,
-                            firstName:
-                              appleUserResponse.firstName !== ''
-                                ? appleUserResponse.firstName
-                                : cachedAppleUser.firstName,
-                            lastName:
-                              appleUserResponse.lastName !== ''
-                                ? appleUserResponse.lastName
-                                : cachedAppleUser.lastName,
-                          };
-                          setAppleUser(updatedUser);
-                          cache.saveAppleUser(updatedUser);
-                        } else {
-                          setAppleUser(appleUserResponse);
-                          cache.saveAppleUser(appleUserResponse);
-                        }
+                        setAppleUser(updatedUser);
+                        cache.saveAppleUser(updatedUser);
                       } else {
-                        setError('Failed to sign in with Apple');
+                        setAppleUser(appleUserResponse);
+                        cache.saveAppleUser(appleUserResponse);
                       }
+                    } else {
+                      updateError('Failed to sign in with Apple');
                     }
-              }
+                  }
+            }
+          />
+        ) : null}
+      </View>
+
+      {googleUser !== null ? (
+        <View style={{ marginTop: 16, alignItems: 'center' }}>
+          <Text>Logged in as: {googleUser.user.name}</Text>
+          {googleUser.user.photo !== null ? (
+            <Image
+              resizeMode="cover"
+              style={{
+                width: 80,
+                height: 80,
+                borderRadius: 9999,
+                marginTop: 8,
+              }}
+              source={{ uri: googleUser.user.photo }}
             />
           ) : null}
         </View>
-
-        {googleUser !== null ? (
-          <View style={{ marginTop: 16, alignItems: 'center' }}>
-            <Text>Logged in as: {googleUser.user.name}</Text>
-            {googleUser.user.photo !== null ? (
-              <Image
-                resizeMode="cover"
-                style={{
-                  width: 80,
-                  height: 80,
-                  borderRadius: 9999,
-                  marginTop: 8,
-                }}
-                source={{ uri: googleUser.user.photo }}
-              />
-            ) : null}
-          </View>
-        ) : null}
-        {appleUser !== null ? (
-          <View style={{ marginTop: 16, alignItems: 'center' }}>
-            <Text>
-              {appleUser.firstName === '' && appleUser.lastName === ''
-                ? `Signed in with Apple (user ${appleUser.userId})`
-                : `Logged in as: ${appleUser.firstName} ${appleUser.lastName}`}
-            </Text>
-          </View>
-        ) : null}
-      </View>
+      ) : null}
+      {appleUser !== null ? (
+        <View style={{ marginTop: 16, alignItems: 'center' }}>
+          <Text>
+            {appleUser.firstName === '' && appleUser.lastName === ''
+              ? `Signed in with Apple (user ${appleUser.userId})`
+              : `Logged in as: ${appleUser.firstName} ${appleUser.lastName}`}
+          </Text>
+        </View>
+      ) : null}
     </View>
   );
-};
+}
+
+function PaymentsWithStripe({
+  updateError,
+}: {
+  updateError: React.Dispatch<React.SetStateAction<string | null>>;
+}) {
+  return (
+    <View style={{ borderTopWidth: 1, marginTop: 16 }}>
+      <Text style={{ marginVertical: 16 }}>Payments With Stripe</Text>
+    </View>
+  );
+}
 
 async function signInWithGoogle(): Promise<GoogleUser | null> {
   try {

@@ -509,6 +509,27 @@ PODS:
     - React-Core
     - React-RCTImage
   - SocketRocket (0.6.0)
+  - Stripe (22.8.2):
+    - Stripe/Stripe3DS2 (= 22.8.2)
+    - StripeApplePay (= 22.8.2)
+    - StripeCore (= 22.8.2)
+    - StripeUICore (= 22.8.2)
+  - stripe-react-native (0.19.0):
+    - React-Core
+    - Stripe (~> 22.8.1)
+    - StripeFinancialConnections (~> 22.8.1)
+  - Stripe/Stripe3DS2 (22.8.2):
+    - StripeApplePay (= 22.8.2)
+    - StripeCore (= 22.8.2)
+    - StripeUICore (= 22.8.2)
+  - StripeApplePay (22.8.2):
+    - StripeCore (= 22.8.2)
+  - StripeCore (22.8.2)
+  - StripeFinancialConnections (22.8.2):
+    - StripeCore (= 22.8.2)
+    - StripeUICore (= 22.8.2)
+  - StripeUICore (22.8.2):
+    - StripeCore (= 22.8.2)
   - Yoga (1.14.0)
   - YogaKit (1.18.1):
     - Yoga (~> 1.14)
@@ -580,6 +601,7 @@ DEPENDENCIES:
   - "RNFBDynamicLinks (from `../node_modules/@react-native-firebase/dynamic-links`)"
   - "RNGoogleSignin (from `../node_modules/@react-native-google-signin/google-signin`)"
   - RNScreens (from `../node_modules/react-native-screens`)
+  - "stripe-react-native (from `../node_modules/@stripe/stripe-react-native`)"
   - Yoga (from `../node_modules/react-native/ReactCommon/yoga`)
 
 SPEC REPOS:
@@ -615,6 +637,11 @@ SPEC REPOS:
     - OpenSSL-Universal
     - PromisesObjC
     - SocketRocket
+    - Stripe
+    - StripeApplePay
+    - StripeCore
+    - StripeFinancialConnections
+    - StripeUICore
     - YogaKit
 
 EXTERNAL SOURCES:
@@ -696,6 +723,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/@react-native-google-signin/google-signin"
   RNScreens:
     :path: "../node_modules/react-native-screens"
+  stripe-react-native:
+    :path: "../node_modules/@stripe/stripe-react-native"
   Yoga:
     :path: "../node_modules/react-native/ReactCommon/yoga"
 
@@ -770,9 +799,15 @@ SPEC CHECKSUMS:
   RNGoogleSignin: b2179ba653c759b936404a7746fc5302f9de6a5a
   RNScreens: 0df01424e9e0ed7827200d6ed1087ddd06c493f9
   SocketRocket: fccef3f9c5cedea1353a9ef6ada904fde10d6608
+  Stripe: 9b02a044432c68a3b63694e4d09c6b30c2c8dfef
+  stripe-react-native: 0e50141806454839806143db5ce514a0cddd4d12
+  StripeApplePay: 1b2dca823c710b7f09667e1b7d9290008dd54bec
+  StripeCore: c03842e8c9feed545ac5976efe2cc1429d5ba553
+  StripeFinancialConnections: 2aef6c41e26aeb6b93ee48e7d7933ad73b01f35d
+  StripeUICore: 3efbad959661e9f3e9ee1855c84a21747c10f285
   Yoga: c2b1f2494060865ac1f27e49639e72371b1205fa
   YogaKit: f782866e155069a2cca2517aafea43200b01fd5a
 
-PODFILE CHECKSUM: 305aa68a6c4ba80a515dbb4cbfc21bbc38bc1bae
+PODFILE CHECKSUM: 93342fa8964fe61925031d6de6c35cad07f88656
 
 COCOAPODS: 1.11.3

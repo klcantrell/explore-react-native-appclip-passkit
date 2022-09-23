@@ -1,5 +1,6 @@
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { StripeProvider } from '@stripe/stripe-react-native';
 import React from 'react';
 
 import HomeScreen from './HomeScreen';
@@ -9,13 +10,19 @@ const AppStack = createNativeStackNavigator<RootStackParamList>();
 
 const App = () => {
   return (
-    <NavigationContainer>
-      <AppStack.Navigator
-        initialRouteName={RootStackRoutes.Home}
-        screenOptions={{ headerShown: false }}>
-        <AppStack.Screen name={RootStackRoutes.Home} component={HomeScreen} />
-      </AppStack.Navigator>
-    </NavigationContainer>
+    <StripeProvider
+      publishableKey="pk_test_chkGUsA5T8WUB5vgc1FMoRgX00Qi1Nq1t4"
+      urlScheme="explorereactnativeappclippasskit.kalalau.dev" // required for 3D Secure and bank redirects
+      // merchantIdentifier="merchant.com.{{YOUR_APP_NAME}}" // required for Apple Pay
+      setReturnUrlSchemeOnAndroid>
+      <NavigationContainer>
+        <AppStack.Navigator
+          initialRouteName={RootStackRoutes.Home}
+          screenOptions={{ headerShown: false }}>
+          <AppStack.Screen name={RootStackRoutes.Home} component={HomeScreen} />
+        </AppStack.Navigator>
+      </NavigationContainer>
+    </StripeProvider>
   );
 };
 
