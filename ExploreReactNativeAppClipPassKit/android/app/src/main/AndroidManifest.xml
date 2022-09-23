@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:dist="http://schemas.android.com/apk/distribution"
     package="com.explorereactnativeappclippasskit">
 
-    <dist:module dist:instant="true" />
+    <!--  Going to try creating a separate project with the same package name that has one instant-enabled module  -->
+<!--    <dist:module dist:instant="true" />-->
 
     <uses-permission android:name="android.permission.INTERNET" />
 

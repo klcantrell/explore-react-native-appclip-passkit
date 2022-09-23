@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:dist="http://schemas.android.com/apk/distribution"
+    xmlns:tools="http://schemas.android.com/tools"
+    package="com.explorereactnativeappclippasskit"
+    android:targetSandboxVersion="2">
+
+    <dist:module
+        dist:instant="true"
+        dist:title="@string/app_name">
+        <dist:fusing dist:include="false" />
+        <dist:delivery>
+            <dist:install-time />
+        </dist:delivery>
+    </dist:module>
+
+    <application
+        android:allowBackup="true"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:fullBackupContent="@xml/backup_rules"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.InstantApp"
+        tools:targetApi="31">
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:label="@string/app_name"
+            android:theme="@style/Theme.InstantApp">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
+                <data
+                    android:host="explorereactnativeappclippasskit.kalalau.dev"
+                    android:scheme="http" />
+                <data
+                    android:host="explorereactnativeappclippasskit.kalalau.dev"
+                    android:scheme="https" />
+            </intent-filter>
+
+            <meta-data
+                android:name="default-url"
+                android:value="https://explorereactnativeappclippasskit.kalalau.dev" />
+        </activity>
+
+        <!-- This element is required in order to use the PaymentsClient -->
+        <meta-data
+            android:name="com.google.android.gms.wallet.api.enabled"
+            android:value="true" />
+    </application>
+
+</manifest>

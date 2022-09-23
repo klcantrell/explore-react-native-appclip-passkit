@@ -139,7 +139,7 @@ android {
         applicationId "com.explorereactnativeappclippasskit"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 200
+        versionCode 2001
         versionName "1.0"
         buildConfigField "boolean", "IS_NEW_ARCHITECTURE_ENABLED", isNewArchitectureEnabled().toString()
 
@@ -227,7 +227,6 @@ android {
             keyPassword 'android'
         }
     }
-    dynamicFeatures = [':instant']
     buildTypes {
         debug {
             signingConfig signingConfigs.debug
