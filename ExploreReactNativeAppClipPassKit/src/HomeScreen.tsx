@@ -9,11 +9,21 @@ import {
   statusCodes as GoogleSigninStatusCodes,
   User as GoogleUser,
 } from '@react-native-google-signin/google-signin';
-import React, { useEffect, useState, type PropsWithChildren } from 'react';
+import { useStripe } from '@stripe/stripe-react-native';
+import React, {
+  useCallback,
+  useEffect,
+  useState,
+  type PropsWithChildren,
+} from 'react';
 import {
+  ActivityIndicator,
+  Alert,
   Button,
   Image,
+  Linking,
   Platform,
+  Pressable,
   SafeAreaView,
   ScrollView,
   StatusBar,
@@ -31,6 +41,8 @@ import WalletManager, { isWalletManagerError } from './WalletManager';
 
 const APPLE_PASS_IDENTIFIER = 'pass.com.kalalau.free-thing';
 const APPLE_PASS_SERIAL_NUMBER = 'analternateserialnumber'; // alt. bgsksfuioa
+
+const API_URL = 'https://a2db-2600-1700-8c21-c160-00-39.ngrok.io';
 
 const HomeScreen = (props: RootStackScreenProps<RootStackRoutes.Home>) => {
   const isDarkMode = useColorScheme() === 'dark';
@@ -156,7 +168,7 @@ function WalletPasses({
           onPress={async () => {
             try {
               await WalletManager.downloadWalletPassFromUrl(
-                `http://localhost:3000/${
+                `${API_URL}/${
                   Platform.OS === 'ios' ? 'applepass' : 'androidpassjwt'
                 }`,
               );
@@ -320,9 +332,206 @@ function PaymentsWithStripe({
 }: {
   updateError: React.Dispatch<React.SetStateAction<string | null>>;
 }) {
+  const { initPaymentSheet, presentPaymentSheet, handleURLCallback } =
+    useStripe();
+  const [stripeInitialized, setStripeInitialized] = useState(false);
+  const [paymentAdded, setPaymentAdded] = useState(false);
+  const [updatingPaymentMethods, setUpdatingPaymentMethods] = useState(false);
+  const [paymentMethods, setPaymentMethods] = useState<StripePaymentMethod[]>(
+    [],
+  );
+
+  const handleDeepLink = useCallback(
+    async (url: string | null) => {
+      if (url) {
+        const stripeHandled = await handleURLCallback(url);
+        if (stripeHandled) {
+          console.log('Stripe redirect complete');
+          // This was a Stripe URL - you can return or add extra handling here as you see fit
+        } else {
+          // This was NOT a Stripe URL – handle as you normally would
+        }
+      }
+    },
+    [handleURLCallback],
+  );
+
+  useEffect(() => {
+    const getUrlAsync = async () => {
+      const initialUrl = await Linking.getInitialURL();
+      handleDeepLink(initialUrl);
+    };
+
+    getUrlAsync();
+
+    const deepLinkListener = Linking.addEventListener(
+      'url',
+      (event: { url: string }) => {
+        handleDeepLink(event.url);
+      },
+    );
+
+    return () => deepLinkListener.remove();
+  }, [handleDeepLink]);
+
+  const fetchPaymentMethods = async (): Promise<StripePaymentMethod[]> => {
+    const response = await fetch(`${API_URL}/list-payment-methods`, {
+      method: 'GET',
+    });
+    if (
+      response.ok &&
+      response.headers.get('content-type')?.includes('application/json')
+    ) {
+      return response.json();
+    } else {
+      console.warn('Something went wrong fetching your payment methods');
+      throw Error();
+    }
+  };
+
+  const deletePaymentMethod = async (
+    paymentMethodId: string,
+  ): Promise<number> => {
+    const response = await fetch(
+      `${API_URL}/payment-method/${paymentMethodId}`,
+      {
+        method: 'DELETE',
+      },
+    );
+    if (response.ok) {
+      return response.status;
+    } else {
+      console.warn('Something went wrong fetching your payment methods');
+      throw Error();
+    }
+  };
+
+  const fetchAddPaymentSheetParams = async () => {
+    const response = await fetch(`${API_URL}/payment-method`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+    const { setupIntent, ephemeralKey, customer } = await response.json();
+
+    return {
+      setupIntent,
+      ephemeralKey,
+      customer,
+    };
+  };
+
+  const initializeAddPaymentSheet = async () => {
+    const { setupIntent, ephemeralKey, customer } =
+      await fetchAddPaymentSheetParams();
+
+    const { error } = await initPaymentSheet({
+      customerId: customer,
+      customerEphemeralKeySecret: ephemeralKey,
+      setupIntentClientSecret: setupIntent,
+      merchantDisplayName: 'React Native Spike Shop',
+      applePay: {
+        merchantCountryCode: 'US',
+      },
+    });
+    if (!error) {
+      setStripeInitialized(true);
+    }
+  };
+
+  const openPaymentSheet = async () => {
+    const { error } = await presentPaymentSheet();
+
+    if (error) {
+      Alert.alert(`Error code: ${error.code}`, error.message);
+    } else {
+      Alert.alert(
+        'Success',
+        'Your payment method is successfully set up for future payments!',
+        [
+          {
+            text: 'Ok',
+            onPress: () => setPaymentAdded(true),
+          },
+        ],
+      );
+    }
+  };
+
+  useEffect(() => {
+    initializeAddPaymentSheet();
+  }, []);
+
+  useEffect(() => {
+    setUpdatingPaymentMethods(true);
+    fetchPaymentMethods().then((paymentMethods) => {
+      setPaymentMethods(paymentMethods);
+      setUpdatingPaymentMethods(false);
+    });
+  }, [paymentAdded]);
+
   return (
     <View style={{ borderTopWidth: 1, marginTop: 16 }}>
       <Text style={{ marginVertical: 16 }}>Payments With Stripe</Text>
+      <Button
+        disabled={!stripeInitialized}
+        title="Add payment method"
+        onPress={openPaymentSheet}
+      />
+      <View style={{ marginTop: 16, alignItems: 'center' }}>
+        {paymentMethods.length > 0 ? (
+          <Text style={{ fontWeight: 'bold' }}>Your payment methods</Text>
+        ) : null}
+        {updatingPaymentMethods ? (
+          <ActivityIndicator style={{ margin: 10 }} />
+        ) : (
+          paymentMethods.map((paymentMethod) => (
+            <View
+              key={paymentMethod.id}
+              style={{
+                borderWidth: 1,
+                borderRadius: 10,
+                padding: 10,
+                margin: 10,
+                flexDirection: 'row',
+                alignItems: 'center',
+              }}>
+              <Text>
+                {paymentMethod.card.brand} ending in {paymentMethod.card.last4}
+              </Text>
+              <Pressable
+                onPress={() => {
+                  Alert.alert(
+                    'Are you sure?',
+                    'Are you sure you want to delete this payment method?',
+                    [
+                      {
+                        style: 'destructive',
+                        text: 'Delete',
+                        onPress: async () => {
+                          setUpdatingPaymentMethods(true);
+                          await deletePaymentMethod(paymentMethod.id);
+                          setPaymentMethods(await fetchPaymentMethods());
+                          setUpdatingPaymentMethods(false);
+                        },
+                      },
+                    ],
+                  );
+                }}
+                style={({ pressed }) => [
+                  {
+                    opacity: pressed ? 0.5 : 1,
+                    padding: 15,
+                    paddingRight: 0,
+                  },
+                ]}>
+                <Text style={{ color: '#ff3b30' }}>Remove</Text>
+              </Pressable>
+            </View>
+          ))
+        )}
+      </View>
     </View>
   );
 }
@@ -392,6 +601,15 @@ async function signInWithApple(): Promise<AppleRequestResponse | null> {
     }
     return null;
   }
+}
+
+interface StripePaymentMethod {
+  id: string;
+  type: string;
+  card: {
+    brand: string;
+    last4: string;
+  };
 }
 
 interface GoogleSigninError {

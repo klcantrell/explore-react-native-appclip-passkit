@@ -13,7 +13,7 @@ const App = () => {
     <StripeProvider
       publishableKey="pk_test_chkGUsA5T8WUB5vgc1FMoRgX00Qi1Nq1t4"
       urlScheme="explorereactnativeappclippasskit.kalalau.dev" // required for 3D Secure and bank redirects
-      // merchantIdentifier="merchant.com.{{YOUR_APP_NAME}}" // required for Apple Pay
+      merchantIdentifier="merchant.com.kalalau.explore.ReactNativeAppClipPassKit" // required for Apple Pay
       setReturnUrlSchemeOnAndroid>
       <NavigationContainer>
         <AppStack.Navigator

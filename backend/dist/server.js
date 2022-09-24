@@ -16,6 +16,10 @@ const path_1 = __importDefault(require("path"));
 const express_1 = __importDefault(require("express"));
 const google_auth_library_1 = require("google-auth-library");
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
+const stripe_1 = __importDefault(require("stripe"));
+const stripe = new stripe_1.default("REDACTED", {
+    apiVersion: "2022-08-01",
+});
 const app = (0, express_1.default)();
 const port = process.env.PORT || 3000;
 /*
@@ -53,6 +57,7 @@ const httpClient = new google_auth_library_1.GoogleAuth({
     credentials: credentials,
     scopes: "https://www.googleapis.com/auth/wallet_object.issuer",
 });
+const TEST_STRIPE_CUSTOMER = "cus_MUJX8mCKVJAHld";
 app.get("/applepass/:id", (req, res) => {
     let fileName;
     if (req.params.id === "bgsksfuioa") {
@@ -203,6 +208,30 @@ app.get("/androidpass/:id", (req, res) => __awaiter(void 0, void 0, void 0, func
         method: "GET",
     });
     res.json(response);
+}));
+app.post("/payment-method", (_req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const ephemeralKey = yield stripe.ephemeralKeys.create({ customer: TEST_STRIPE_CUSTOMER }, { apiVersion: "2022-08-01" });
+    const setupIntent = yield stripe.setupIntents.create({
+        customer: TEST_STRIPE_CUSTOMER,
+    });
+    res.json({
+        setupIntent: setupIntent.client_secret,
+        ephemeralKey: ephemeralKey.secret,
+        customer: TEST_STRIPE_CUSTOMER,
+        publishableKey: "pk_test_TYooMQauvdEDq54NiTphI7jx",
+    });
+}));
+app.delete("/payment-method/:id", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    console.log(`DELETING PAYMENT METHOD ${req.params.id}`);
+    yield stripe.paymentMethods.detach(req.params.id);
+    res.status(201).send();
+}));
+app.get("/list-payment-methods", (_req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const paymentMethods = yield stripe.paymentMethods.list({
+        customer: TEST_STRIPE_CUSTOMER,
+        type: "card",
+    });
+    res.json(paymentMethods.data);
 }));
 app.listen(port, () => {
     console.log(`Server is running at https://localhost:${port}`);

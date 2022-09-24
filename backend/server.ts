@@ -3,8 +3,13 @@ import path from "path";
 import express from "express";
 import { GoogleAuth } from "google-auth-library";
 import jwt from "jsonwebtoken";
+import Stripe from "stripe";
 
 import type { Express, Request, Response } from "express";
+
+const stripe = new Stripe("REDACTED", {
+  apiVersion: "2022-08-01",
+});
 
 const app: Express = express();
 const port = process.env.PORT || 3000;
@@ -51,6 +56,8 @@ const httpClient = new GoogleAuth({
   credentials: credentials,
   scopes: "https://www.googleapis.com/auth/wallet_object.issuer",
 });
+
+const TEST_STRIPE_CUSTOMER = "cus_MUJX8mCKVJAHld";
 
 app.get("/applepass/:id", (req: Request<{ id: string }>, res: Response) => {
   let fileName: string | undefined;
@@ -216,6 +223,36 @@ app.get("/androidpass/:id", async (req: Request, res: Response) => {
     method: "GET",
   });
   res.json(response);
+});
+
+app.post("/payment-method", async (_req: Request, res: Response) => {
+  const ephemeralKey = await stripe.ephemeralKeys.create(
+    { customer: TEST_STRIPE_CUSTOMER },
+    { apiVersion: "2022-08-01" }
+  );
+  const setupIntent = await stripe.setupIntents.create({
+    customer: TEST_STRIPE_CUSTOMER,
+  });
+  res.json({
+    setupIntent: setupIntent.client_secret,
+    ephemeralKey: ephemeralKey.secret,
+    customer: TEST_STRIPE_CUSTOMER,
+    publishableKey: "pk_test_TYooMQauvdEDq54NiTphI7jx",
+  });
+});
+
+app.delete("/payment-method/:id", async (req: Request, res: Response) => {
+  console.log(`DELETING PAYMENT METHOD ${req.params.id}`);
+  await stripe.paymentMethods.detach(req.params.id);
+  res.status(201).send();
+});
+
+app.get("/list-payment-methods", async (_req: Request, res: Response) => {
+  const paymentMethods = await stripe.paymentMethods.list({
+    customer: TEST_STRIPE_CUSTOMER,
+    type: "card",
+  });
+  res.json(paymentMethods.data);
 });
 
 app.listen(port, () => {
