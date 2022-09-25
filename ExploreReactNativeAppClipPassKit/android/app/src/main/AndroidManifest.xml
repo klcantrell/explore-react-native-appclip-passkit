@@ -33,10 +33,10 @@
                 <category android:name="android.intent.category.BROWSABLE" />
 
                 <data
-                    android:host="explorereactnativeappclippasskit.kalalau.dev"
+                    android:host="exploreappclip.kalalau.dev"
                     android:scheme="http" />
                 <data
-                    android:host="explorereactnativeappclippasskit.kalalau.dev"
+                    android:host="exploreappclip.kalalau.dev"
                     android:scheme="https" />
             </intent-filter>
             <intent-filter>

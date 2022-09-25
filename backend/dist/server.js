@@ -17,7 +17,8 @@ const express_1 = __importDefault(require("express"));
 const google_auth_library_1 = require("google-auth-library");
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const stripe_1 = __importDefault(require("stripe"));
-const stripe = new stripe_1.default("REDACTED", {
+const SECRET_STRIPE_KEY = "REDACTED";
+const stripe = new stripe_1.default(SECRET_STRIPE_KEY, {
     apiVersion: "2022-08-01",
 });
 const app = (0, express_1.default)();
@@ -58,6 +59,7 @@ const httpClient = new google_auth_library_1.GoogleAuth({
     scopes: "https://www.googleapis.com/auth/wallet_object.issuer",
 });
 const TEST_STRIPE_CUSTOMER = "cus_MUJX8mCKVJAHld";
+const PUBLISHABLE_STRIPE_KEY = "pk_test_chkGUsA5T8WUB5vgc1FMoRgX00Qi1Nq1t4";
 app.get("/applepass/:id", (req, res) => {
     let fileName;
     if (req.params.id === "bgsksfuioa") {
@@ -218,11 +220,27 @@ app.post("/payment-method", (_req, res) => __awaiter(void 0, void 0, void 0, fun
         setupIntent: setupIntent.client_secret,
         ephemeralKey: ephemeralKey.secret,
         customer: TEST_STRIPE_CUSTOMER,
-        publishableKey: "pk_test_TYooMQauvdEDq54NiTphI7jx",
+        publishableKey: PUBLISHABLE_STRIPE_KEY,
+    });
+}));
+app.post("/payment-sheet", (_req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const ephemeralKey = yield stripe.ephemeralKeys.create({ customer: TEST_STRIPE_CUSTOMER }, { apiVersion: "2022-08-01" });
+    const paymentIntent = yield stripe.paymentIntents.create({
+        amount: 100,
+        currency: "usd",
+        customer: TEST_STRIPE_CUSTOMER,
+        automatic_payment_methods: {
+            enabled: true,
+        },
+    });
+    res.json({
+        paymentIntent: paymentIntent.client_secret,
+        ephemeralKey: ephemeralKey.secret,
+        customer: TEST_STRIPE_CUSTOMER,
+        publishableKey: PUBLISHABLE_STRIPE_KEY,
     });
 }));
 app.delete("/payment-method/:id", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    console.log(`DELETING PAYMENT METHOD ${req.params.id}`);
     yield stripe.paymentMethods.detach(req.params.id);
     res.status(201).send();
 }));

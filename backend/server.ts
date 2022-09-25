@@ -7,7 +7,9 @@ import Stripe from "stripe";
 
 import type { Express, Request, Response } from "express";
 
-const stripe = new Stripe("REDACTED", {
+const SECRET_STRIPE_KEY = "REDACTED";
+
+const stripe = new Stripe(SECRET_STRIPE_KEY, {
   apiVersion: "2022-08-01",
 });
 
@@ -58,6 +60,7 @@ const httpClient = new GoogleAuth({
 });
 
 const TEST_STRIPE_CUSTOMER = "cus_MUJX8mCKVJAHld";
+const PUBLISHABLE_STRIPE_KEY = "pk_test_chkGUsA5T8WUB5vgc1FMoRgX00Qi1Nq1t4";
 
 app.get("/applepass/:id", (req: Request<{ id: string }>, res: Response) => {
   let fileName: string | undefined;
@@ -237,12 +240,33 @@ app.post("/payment-method", async (_req: Request, res: Response) => {
     setupIntent: setupIntent.client_secret,
     ephemeralKey: ephemeralKey.secret,
     customer: TEST_STRIPE_CUSTOMER,
-    publishableKey: "pk_test_TYooMQauvdEDq54NiTphI7jx",
+    publishableKey: PUBLISHABLE_STRIPE_KEY,
+  });
+});
+
+app.post("/payment-sheet", async (_req: Request, res: Response) => {
+  const ephemeralKey = await stripe.ephemeralKeys.create(
+    { customer: TEST_STRIPE_CUSTOMER },
+    { apiVersion: "2022-08-01" }
+  );
+  const paymentIntent = await stripe.paymentIntents.create({
+    amount: 100,
+    currency: "usd",
+    customer: TEST_STRIPE_CUSTOMER,
+    automatic_payment_methods: {
+      enabled: true,
+    },
+  });
+
+  res.json({
+    paymentIntent: paymentIntent.client_secret,
+    ephemeralKey: ephemeralKey.secret,
+    customer: TEST_STRIPE_CUSTOMER,
+    publishableKey: PUBLISHABLE_STRIPE_KEY,
   });
 });
 
 app.delete("/payment-method/:id", async (req: Request, res: Response) => {
-  console.log(`DELETING PAYMENT METHOD ${req.params.id}`);
   await stripe.paymentMethods.detach(req.params.id);
   res.status(201).send();
 });

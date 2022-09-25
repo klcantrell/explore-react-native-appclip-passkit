@@ -42,9 +42,9 @@ import WalletManager, { isWalletManagerError } from './WalletManager';
 const APPLE_PASS_IDENTIFIER = 'pass.com.kalalau.free-thing';
 const APPLE_PASS_SERIAL_NUMBER = 'analternateserialnumber'; // alt. bgsksfuioa
 
-const API_URL = 'https://a2db-2600-1700-8c21-c160-00-39.ngrok.io';
+const API_URL = 'https://c2cb-2600-1700-8c21-c160-d9-2404-a3fe-fd78.ngrok.io';
 
-const HomeScreen = (props: RootStackScreenProps<RootStackRoutes.Home>) => {
+const HomeScreen = (_props: RootStackScreenProps<RootStackRoutes.Home>) => {
   const isDarkMode = useColorScheme() === 'dark';
   const [error, setError] = useState<string | null>(null);
 
@@ -239,8 +239,8 @@ function SingleSignOn({
           color={GoogleSigninButton.Color.Dark}
           onPress={async () => {
             setGoogleSigninInProgress(true);
-            const googleUser = await signInWithGoogle();
-            setGoogleUser(googleUser);
+            const user = await signInWithGoogle();
+            setGoogleUser(user);
           }}
           disabled={googleSigninInProgress}
         />
@@ -328,18 +328,24 @@ function SingleSignOn({
 }
 
 function PaymentsWithStripe({
-  updateError,
+  updateError: _updateError,
 }: {
   updateError: React.Dispatch<React.SetStateAction<string | null>>;
 }) {
   const { initPaymentSheet, presentPaymentSheet, handleURLCallback } =
     useStripe();
-  const [stripeInitialized, setStripeInitialized] = useState(false);
+  const [stripeAddPaymentInitialized, setStripeAddPaymentInitialized] =
+    useState(false);
+  const [stripeAcceptPaymentInitialized, setStripeAcceptPaymentInitialized] =
+    useState(false);
   const [paymentAdded, setPaymentAdded] = useState(false);
   const [updatingPaymentMethods, setUpdatingPaymentMethods] = useState(false);
-  const [paymentMethods, setPaymentMethods] = useState<StripePaymentMethod[]>(
-    [],
-  );
+  const [paymentMethods, setPaymentMethods] = useState<
+    StripePaymentMethod[] | null
+  >(null);
+  const customerHasPaymentMethods =
+    paymentMethods !== null && paymentMethods.length > 0;
+  const paymentMethodsLoading = paymentMethods === null;
 
   const handleDeepLink = useCallback(
     async (url: string | null) => {
@@ -374,7 +380,9 @@ function PaymentsWithStripe({
     return () => deepLinkListener.remove();
   }, [handleDeepLink]);
 
-  const fetchPaymentMethods = async (): Promise<StripePaymentMethod[]> => {
+  const fetchPaymentMethods = useCallback(async (): Promise<
+    StripePaymentMethod[]
+  > => {
     const response = await fetch(`${API_URL}/list-payment-methods`, {
       method: 'GET',
     });
@@ -387,7 +395,7 @@ function PaymentsWithStripe({
       console.warn('Something went wrong fetching your payment methods');
       throw Error();
     }
-  };
+  }, []);
 
   const deletePaymentMethod = async (
     paymentMethodId: string,
@@ -422,7 +430,23 @@ function PaymentsWithStripe({
     };
   };
 
-  const initializeAddPaymentSheet = async () => {
+  const fetchAcceptPaymentSheetParams = async () => {
+    const response = await fetch(`${API_URL}/payment-sheet`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+    const { paymentIntent, ephemeralKey, customer } = await response.json();
+
+    return {
+      paymentIntent,
+      ephemeralKey,
+      customer,
+    };
+  };
+
+  const initializeAddPaymentSheet = useCallback(async () => {
     const { setupIntent, ephemeralKey, customer } =
       await fetchAddPaymentSheetParams();
 
@@ -436,11 +460,11 @@ function PaymentsWithStripe({
       },
     });
     if (!error) {
-      setStripeInitialized(true);
+      setStripeAddPaymentInitialized(true);
     }
-  };
+  }, [initPaymentSheet]);
 
-  const openPaymentSheet = async () => {
+  const openAddPaymentSheet = async () => {
     const { error } = await presentPaymentSheet();
 
     if (error) {
@@ -459,77 +483,129 @@ function PaymentsWithStripe({
     }
   };
 
+  const initializeAcceptPaymentSheet = useCallback(async () => {
+    const { paymentIntent, ephemeralKey, customer } =
+      await fetchAcceptPaymentSheetParams();
+
+    const { error } = await initPaymentSheet({
+      customerId: customer,
+      customerEphemeralKeySecret: ephemeralKey,
+      paymentIntentClientSecret: paymentIntent,
+      merchantDisplayName: 'React Native Spike Shop',
+      applePay: {
+        merchantCountryCode: 'US',
+      },
+    });
+    if (!error) {
+      setStripeAcceptPaymentInitialized(true);
+    }
+  }, [initPaymentSheet]);
+
+  const openAcceptPaymentSheet = async () => {
+    const { error } = await presentPaymentSheet();
+
+    if (error) {
+      Alert.alert(`Error code: ${error.code}`, error.message);
+    } else {
+      Alert.alert('Success', 'You spent $1');
+    }
+  };
+
   useEffect(() => {
-    initializeAddPaymentSheet();
-  }, []);
+    if (!customerHasPaymentMethods) {
+      initializeAddPaymentSheet();
+    } else {
+      initializeAcceptPaymentSheet();
+    }
+  }, [
+    customerHasPaymentMethods,
+    initializeAcceptPaymentSheet,
+    initializeAddPaymentSheet,
+  ]);
 
   useEffect(() => {
     setUpdatingPaymentMethods(true);
-    fetchPaymentMethods().then((paymentMethods) => {
-      setPaymentMethods(paymentMethods);
+    fetchPaymentMethods().then((fetchedPaymentMethods) => {
+      setPaymentMethods(fetchedPaymentMethods);
       setUpdatingPaymentMethods(false);
     });
-  }, [paymentAdded]);
+  }, [paymentAdded, fetchPaymentMethods]);
 
   return (
     <View style={{ borderTopWidth: 1, marginTop: 16 }}>
       <Text style={{ marginVertical: 16 }}>Payments With Stripe</Text>
-      <Button
-        disabled={!stripeInitialized}
-        title="Add payment method"
-        onPress={openPaymentSheet}
-      />
       <View style={{ marginTop: 16, alignItems: 'center' }}>
-        {paymentMethods.length > 0 ? (
-          <Text style={{ fontWeight: 'bold' }}>Your payment methods</Text>
-        ) : null}
-        {updatingPaymentMethods ? (
+        {paymentMethodsLoading ? (
           <ActivityIndicator style={{ margin: 10 }} />
         ) : (
-          paymentMethods.map((paymentMethod) => (
-            <View
-              key={paymentMethod.id}
-              style={{
-                borderWidth: 1,
-                borderRadius: 10,
-                padding: 10,
-                margin: 10,
-                flexDirection: 'row',
-                alignItems: 'center',
-              }}>
-              <Text>
-                {paymentMethod.card.brand} ending in {paymentMethod.card.last4}
-              </Text>
-              <Pressable
-                onPress={() => {
-                  Alert.alert(
-                    'Are you sure?',
-                    'Are you sure you want to delete this payment method?',
-                    [
+          <>
+            {customerHasPaymentMethods && !paymentMethodsLoading ? (
+              <Text style={{ fontWeight: 'bold' }}>Your payment methods</Text>
+            ) : null}
+            {updatingPaymentMethods ? (
+              <ActivityIndicator style={{ margin: 10 }} />
+            ) : (
+              (paymentMethods ?? []).map((paymentMethod) => (
+                <View
+                  key={paymentMethod.id}
+                  style={{
+                    borderWidth: 1,
+                    borderRadius: 10,
+                    padding: 10,
+                    margin: 10,
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                  }}>
+                  <Text>
+                    {paymentMethod.card.brand} ending in{' '}
+                    {paymentMethod.card.last4}
+                  </Text>
+                  <Pressable
+                    onPress={() => {
+                      Alert.alert(
+                        'Are you sure?',
+                        'Are you sure you want to delete this payment method?',
+                        [
+                          {
+                            style: 'destructive',
+                            text: 'Delete',
+                            onPress: async () => {
+                              setUpdatingPaymentMethods(true);
+                              await deletePaymentMethod(paymentMethod.id);
+                              setPaymentMethods(await fetchPaymentMethods());
+                              setUpdatingPaymentMethods(false);
+                            },
+                          },
+                        ],
+                      );
+                    }}
+                    style={({ pressed }) => [
                       {
-                        style: 'destructive',
-                        text: 'Delete',
-                        onPress: async () => {
-                          setUpdatingPaymentMethods(true);
-                          await deletePaymentMethod(paymentMethod.id);
-                          setPaymentMethods(await fetchPaymentMethods());
-                          setUpdatingPaymentMethods(false);
-                        },
+                        opacity: pressed ? 0.5 : 1,
+                        padding: 15,
+                        paddingRight: 0,
                       },
-                    ],
-                  );
-                }}
-                style={({ pressed }) => [
-                  {
-                    opacity: pressed ? 0.5 : 1,
-                    padding: 15,
-                    paddingRight: 0,
-                  },
-                ]}>
-                <Text style={{ color: '#ff3b30' }}>Remove</Text>
-              </Pressable>
-            </View>
-          ))
+                    ]}>
+                    <Text style={{ color: '#ff3b30' }}>Remove</Text>
+                  </Pressable>
+                </View>
+              ))
+            )}
+            {!customerHasPaymentMethods && !paymentMethodsLoading ? (
+              <Button
+                disabled={!stripeAddPaymentInitialized}
+                title="Add payment method"
+                onPress={openAddPaymentSheet}
+              />
+            ) : null}
+            {customerHasPaymentMethods && !paymentMethodsLoading ? (
+              <Button
+                disabled={!stripeAcceptPaymentInitialized}
+                title="Pay $1"
+                onPress={openAcceptPaymentSheet}
+              />
+            ) : null}
+          </>
         )}
       </View>
     </View>
