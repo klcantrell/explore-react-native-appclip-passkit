@@ -10,7 +10,7 @@ android {
         applicationId "com.explorereactnativeappclippasskit"
         minSdk 26
         targetSdk 33
-        versionCode 201
+        versionCode 202
         versionName "1.0"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
