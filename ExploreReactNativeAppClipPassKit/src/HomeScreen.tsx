@@ -42,7 +42,7 @@ import WalletManager, { isWalletManagerError } from './WalletManager';
 const APPLE_PASS_IDENTIFIER = 'pass.com.kalalau.free-thing';
 const APPLE_PASS_SERIAL_NUMBER = 'analternateserialnumber'; // alt. bgsksfuioa
 
-const API_URL = 'https://c2cb-2600-1700-8c21-c160-d9-2404-a3fe-fd78.ngrok.io';
+const API_URL = 'https://0c6b-2600-1700-8c21-c160-9517-2629-f8cf-c6d7.ngrok.io';
 
 const HomeScreen = (_props: RootStackScreenProps<RootStackRoutes.Home>) => {
   const isDarkMode = useColorScheme() === 'dark';
@@ -338,7 +338,6 @@ function PaymentsWithStripe({
     useState(false);
   const [stripeAcceptPaymentInitialized, setStripeAcceptPaymentInitialized] =
     useState(false);
-  const [paymentAdded, setPaymentAdded] = useState(false);
   const [updatingPaymentMethods, setUpdatingPaymentMethods] = useState(false);
   const [paymentMethods, setPaymentMethods] = useState<
     StripePaymentMethod[] | null
@@ -396,6 +395,13 @@ function PaymentsWithStripe({
       throw Error();
     }
   }, []);
+
+  const refreshPaymentMethods = useCallback(async () => {
+    setUpdatingPaymentMethods(true);
+    const fetchedPaymentMethods = await fetchPaymentMethods();
+    setPaymentMethods(fetchedPaymentMethods);
+    setUpdatingPaymentMethods(false);
+  }, [fetchPaymentMethods]);
 
   const deletePaymentMethod = async (
     paymentMethodId: string,
@@ -468,7 +474,12 @@ function PaymentsWithStripe({
     const { error } = await presentPaymentSheet();
 
     if (error) {
-      Alert.alert(`Error code: ${error.code}`, error.message);
+      Alert.alert(`Error code: ${error.code}`, error.message, [
+        {
+          text: 'Ok',
+          onPress: () => refreshPaymentMethods(),
+        },
+      ]);
     } else {
       Alert.alert(
         'Success',
@@ -476,7 +487,7 @@ function PaymentsWithStripe({
         [
           {
             text: 'Ok',
-            onPress: () => setPaymentAdded(true),
+            onPress: () => refreshPaymentMethods(),
           },
         ],
       );
@@ -505,9 +516,19 @@ function PaymentsWithStripe({
     const { error } = await presentPaymentSheet();
 
     if (error) {
-      Alert.alert(`Error code: ${error.code}`, error.message);
+      Alert.alert(`Error code: ${error.code}`, error.message, [
+        {
+          text: 'Ok',
+          onPress: () => refreshPaymentMethods(),
+        },
+      ]);
     } else {
-      Alert.alert('Success', 'You spent $1');
+      Alert.alert('Success', 'You spent $1', [
+        {
+          text: 'Ok',
+          onPress: () => refreshPaymentMethods(),
+        },
+      ]);
     }
   };
 
@@ -524,12 +545,8 @@ function PaymentsWithStripe({
   ]);
 
   useEffect(() => {
-    setUpdatingPaymentMethods(true);
-    fetchPaymentMethods().then((fetchedPaymentMethods) => {
-      setPaymentMethods(fetchedPaymentMethods);
-      setUpdatingPaymentMethods(false);
-    });
-  }, [paymentAdded, fetchPaymentMethods]);
+    refreshPaymentMethods();
+  }, [refreshPaymentMethods]);
 
   return (
     <View style={{ borderTopWidth: 1, marginTop: 16 }}>
