@@ -249,6 +249,7 @@ app.get("/list-payment-methods", (_req, res) => __awaiter(void 0, void 0, void 0
         customer: TEST_STRIPE_CUSTOMER,
         type: "card",
     });
+    res.header("Cache-Control", "no-cache, no-store, must-revalidate");
     res.json(paymentMethods.data);
 }));
 app.listen(port, () => {

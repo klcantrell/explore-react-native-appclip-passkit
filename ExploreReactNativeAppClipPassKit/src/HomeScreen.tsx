@@ -42,7 +42,7 @@ import WalletManager, { isWalletManagerError } from './WalletManager';
 const APPLE_PASS_IDENTIFIER = 'pass.com.kalalau.free-thing';
 const APPLE_PASS_SERIAL_NUMBER = 'analternateserialnumber'; // alt. bgsksfuioa
 
-const API_URL = 'https://0c6b-2600-1700-8c21-c160-9517-2629-f8cf-c6d7.ngrok.io';
+const API_URL = 'https://b2dc-2600-1700-8c21-c160-9517-2629-f8cf-c6d7.ngrok.io';
 
 const HomeScreen = (_props: RootStackScreenProps<RootStackRoutes.Home>) => {
   const isDarkMode = useColorScheme() === 'dark';

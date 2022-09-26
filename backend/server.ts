@@ -276,6 +276,7 @@ app.get("/list-payment-methods", async (_req: Request, res: Response) => {
     customer: TEST_STRIPE_CUSTOMER,
     type: "card",
   });
+  res.header("Cache-Control", "no-cache, no-store, must-revalidate");
   res.json(paymentMethods.data);
 });
 

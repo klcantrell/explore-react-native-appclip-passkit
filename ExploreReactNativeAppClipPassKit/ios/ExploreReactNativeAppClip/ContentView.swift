@@ -32,7 +32,7 @@ struct ContentView: View {
                   walletManager.presentPass(fetchedPass)
                 } else {
                   walletManager.downloadWalletPass(
-                    url: "https://0c6b-2600-1700-8c21-c160-9517-2629-f8cf-c6d7.ngrok.io/applepass",
+                    url: "https://b2dc-2600-1700-8c21-c160-9517-2629-f8cf-c6d7.ngrok.io/applepass",
                     onSuccess: { (pass: PKPass) in
                       alreadyHasPass = true
                       if let defaults = UserDefaults(suiteName: APP_GROUP) {
