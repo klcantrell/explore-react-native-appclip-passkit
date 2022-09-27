@@ -8,6 +8,9 @@ import Stripe from "stripe";
 import type { Express, Request, Response } from "express";
 
 const SECRET_STRIPE_KEY = "REDACTED";
+const STRIPE_WEBHOOK_SECRET = "REDACTED";
+
+const TEST_SUBSCRIPTION_PRICE_ID = "price_1LmRYKFUK6dPhUL2jPQIEldI";
 
 const stripe = new Stripe(SECRET_STRIPE_KEY, {
   apiVersion: "2022-08-01",
@@ -279,6 +282,120 @@ app.get("/list-payment-methods", async (_req: Request, res: Response) => {
   res.header("Cache-Control", "no-cache, no-store, must-revalidate");
   res.json(paymentMethods.data);
 });
+
+app.post(
+  "/create-subscription",
+  express.json({ type: "application/json" }),
+  async (
+    req: Request<{}, {}, { paymentMethod: string | null }>,
+    res: Response
+  ) => {
+    const paymentMethod = req.body.paymentMethod;
+    let subscription: Stripe.Response<Stripe.Subscription>;
+    if (paymentMethod != null) {
+      subscription = await stripe.subscriptions.create({
+        default_payment_method: paymentMethod,
+        customer: TEST_STRIPE_CUSTOMER,
+        items: [
+          {
+            price: TEST_SUBSCRIPTION_PRICE_ID,
+          },
+        ],
+        expand: ["latest_invoice.payment_intent"],
+      });
+    } else {
+      subscription = await stripe.subscriptions.create({
+        customer: TEST_STRIPE_CUSTOMER,
+        items: [
+          {
+            price: TEST_SUBSCRIPTION_PRICE_ID,
+          },
+        ],
+        payment_behavior: "default_incomplete",
+        payment_settings: {
+          save_default_payment_method: "on_subscription",
+        },
+        expand: ["latest_invoice.payment_intent"],
+      });
+    }
+    console.log(
+      `Subscription session created: { id=${subscription.id}, current_period_end=${subscription.current_period_end}, status=${subscription.status} }`
+    );
+    res.json({
+      subscriptionStatus: subscription.status,
+      subscriptionId: subscription.id,
+      clientSecret: (
+        (subscription.latest_invoice as Stripe.Invoice)
+          .payment_intent as Stripe.PaymentIntent
+      ).client_secret,
+    });
+  }
+);
+
+app.get("/subscription", async (_req: Request, res: Response) => {
+  const customer = (await stripe.customers.retrieve(TEST_STRIPE_CUSTOMER, {
+    expand: ["subscriptions"],
+  })) as Stripe.Customer;
+  res.json(customer.subscriptions);
+});
+
+app.post(
+  "/stripe-webhook",
+  express.raw({ type: "application/json" }),
+  async (req: Request, res: Response) => {
+    const sig = req.headers["stripe-signature"] as string;
+
+    let event: Stripe.Event;
+    let subscription: Stripe.Subscription;
+
+    try {
+      event = stripe.webhooks.constructEvent(
+        req.body,
+        sig,
+        STRIPE_WEBHOOK_SECRET
+      );
+    } catch (error) {
+      const message = `Webhook Error: ${(error as Error).message}`;
+      console.log(message);
+      res.status(400).send(message);
+      return;
+    }
+
+    switch (event.type) {
+      case "customer.subscription.created":
+        subscription = event.data.object as Stripe.Subscription;
+        console.log(
+          `Subscription created: { id=${subscription.id}, status=${subscription.status} }}`
+        );
+        break;
+      case "customer.subscription.deleted":
+        subscription = event.data.object as Stripe.Subscription;
+        console.log(
+          `Subscription canceled: { id=${subscription.id}, status=${subscription.status} }}`
+        );
+        break;
+      case "customer.subscription.updated":
+        subscription = event.data.object as Stripe.Subscription;
+        console.log(
+          `Subscription updated: { id=${subscription.id}, status=${subscription.status} }}`
+        );
+        break;
+      case "payment_method.attached":
+        const attachedPaymentMethod = event.data.object as Stripe.PaymentMethod;
+        await stripe.customers.update(TEST_STRIPE_CUSTOMER, {
+          invoice_settings: {
+            default_payment_method: attachedPaymentMethod.id,
+          },
+        });
+        break;
+      default:
+        console.log(`Unhandled event type ${event.type}`);
+    }
+
+    // Return a 200 response to acknowledge receipt of the event
+    res.send();
+  }
+);
 
 app.listen(port, () => {
   console.log(`Server is running at https://localhost:${port}`);

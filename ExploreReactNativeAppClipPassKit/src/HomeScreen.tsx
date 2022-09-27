@@ -42,7 +42,7 @@ import WalletManager, { isWalletManagerError } from './WalletManager';
 const APPLE_PASS_IDENTIFIER = 'pass.com.kalalau.free-thing';
 const APPLE_PASS_SERIAL_NUMBER = 'analternateserialnumber'; // alt. bgsksfuioa
 
-const API_URL = 'https://b2dc-2600-1700-8c21-c160-9517-2629-f8cf-c6d7.ngrok.io';
+const API_URL = 'https://ed14-2600-1700-8c21-c160-cc84-91d1-3a75-b194.ngrok.io';
 
 const HomeScreen = (_props: RootStackScreenProps<RootStackRoutes.Home>) => {
   const isDarkMode = useColorScheme() === 'dark';
@@ -338,10 +338,14 @@ function PaymentsWithStripe({
     useState(false);
   const [stripeAcceptPaymentInitialized, setStripeAcceptPaymentInitialized] =
     useState(false);
+  const [subscription, setSubscription] = useState<
+    'none' | 'loading' | 'subscribed' | 'error'
+  >('none');
   const [updatingPaymentMethods, setUpdatingPaymentMethods] = useState(false);
   const [paymentMethods, setPaymentMethods] = useState<
     StripePaymentMethod[] | null
   >(null);
+
   const customerHasPaymentMethods =
     paymentMethods !== null && paymentMethods.length > 0;
   const paymentMethodsLoading = paymentMethods === null;
@@ -396,6 +400,32 @@ function PaymentsWithStripe({
     }
   }, []);
 
+  const fetchSubscriptions =
+    useCallback(async (): Promise<StripeSubscriptions> => {
+      const response = await fetch(`${API_URL}/subscription`, {
+        method: 'GET',
+      });
+      if (
+        response.ok &&
+        response.headers.get('content-type')?.includes('application/json')
+      ) {
+        return response.json();
+      } else {
+        console.warn('Something went wrong fetching your subscriptions');
+        throw Error();
+      }
+    }, []);
+
+  const refreshSubscriptions = useCallback(async () => {
+    setSubscription('loading');
+    const fetchedSubscriptions = await fetchSubscriptions();
+    if (fetchedSubscriptions.data.length > 0) {
+      setSubscription('subscribed');
+    } else {
+      setSubscription('none');
+    }
+  }, [fetchSubscriptions]);
+
   const refreshPaymentMethods = useCallback(async () => {
     setUpdatingPaymentMethods(true);
     const fetchedPaymentMethods = await fetchPaymentMethods();
@@ -449,6 +479,41 @@ function PaymentsWithStripe({
       paymentIntent,
       ephemeralKey,
       customer,
+    };
+  };
+
+  const fetchSubscriptionPaymentSheetParams = async () => {
+    const response = await fetch(`${API_URL}/create-subscription`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+    const { subscriptionId, clientSecret, subscriptionStatus } =
+      await response.json();
+
+    return {
+      subscriptionId,
+      clientSecret,
+      subscriptionStatus,
+    };
+  };
+
+  const payForSubscription = async (paymentMethodId: string | null = null) => {
+    const response = await fetch(`${API_URL}/create-subscription`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ paymentMethod: paymentMethodId }),
+    });
+    const { subscriptionId, clientSecret, subscriptionStatus } =
+      await response.json();
+
+    return {
+      subscriptionId,
+      clientSecret,
+      subscriptionStatus,
     };
   };
 
@@ -532,6 +597,99 @@ function PaymentsWithStripe({
     }
   };
 
+  const initializeSubscriptionPaymentSheet = async () => {
+    const { clientSecret } = await fetchSubscriptionPaymentSheetParams();
+
+    const { error } = await initPaymentSheet({
+      paymentIntentClientSecret: clientSecret,
+      merchantDisplayName: 'React Native Spike Shop',
+      applePay: {
+        merchantCountryCode: 'US',
+      },
+    });
+    if (error) {
+      Alert.alert(`Error code: ${error.code}`, error.message);
+    }
+  };
+
+  const showSubscriptionPaymentMethodConfirm = () => {
+    Alert.alert(
+      'Use your saved payment method?',
+      `Should we use the payment method ending in ${
+        paymentMethods![0].card.last4
+      }`,
+      [
+        {
+          text: 'Yes',
+          onPress: async () => {
+            try {
+              setSubscription('loading');
+              const { subscriptionStatus } = await payForSubscription(
+                paymentMethods![0].id,
+              );
+              if (subscriptionStatus !== 'active') {
+                throw Error();
+              }
+              setSubscription('subscribed');
+            } catch (error) {
+              console.log(
+                'Failed to create subscription with existing payment method',
+              );
+              setSubscription('error');
+            }
+          },
+        },
+        {
+          text: 'Add payment method',
+          onPress: async () => {
+            try {
+              await initializeSubscriptionPaymentSheet();
+              openSubscriptionPaymentSheet();
+            } catch (error) {
+              console.log(
+                'Failed to create subscription with new payment method',
+              );
+            }
+          },
+        },
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+      ],
+    );
+  };
+
+  const showSubscriptionActiveAlert = () => {
+    Alert.alert('Success', 'Unlimited is yours!', [
+      {
+        text: 'Ok',
+        onPress: async () => {
+          await refreshPaymentMethods();
+          setSubscription('subscribed');
+        },
+      },
+    ]);
+  };
+
+  const openSubscriptionPaymentSheet = async () => {
+    const { error } = await presentPaymentSheet();
+
+    if (error) {
+      Alert.alert(`Error code: ${error.code}`, error.message, [
+        {
+          text: 'Ok',
+          onPress: async () => {
+            await refreshPaymentMethods();
+            setSubscription('none');
+          },
+        },
+      ]);
+    } else {
+      showSubscriptionActiveAlert();
+    }
+  };
+
   useEffect(() => {
     if (!customerHasPaymentMethods) {
       initializeAddPaymentSheet();
@@ -547,6 +705,10 @@ function PaymentsWithStripe({
   useEffect(() => {
     refreshPaymentMethods();
   }, [refreshPaymentMethods]);
+
+  useEffect(() => {
+    refreshSubscriptions();
+  }, [refreshSubscriptions]);
 
   return (
     <View style={{ borderTopWidth: 1, marginTop: 16 }}>
@@ -590,6 +752,7 @@ function PaymentsWithStripe({
                               setUpdatingPaymentMethods(true);
                               await deletePaymentMethod(paymentMethod.id);
                               setPaymentMethods(await fetchPaymentMethods());
+                              setSubscription('none'); // we'd want to actually delete the subscription as well most likely
                               setUpdatingPaymentMethods(false);
                             },
                           },
@@ -608,19 +771,47 @@ function PaymentsWithStripe({
                 </View>
               ))
             )}
-            {!customerHasPaymentMethods && !paymentMethodsLoading ? (
+            {!customerHasPaymentMethods &&
+            !paymentMethodsLoading &&
+            subscription !== 'subscribed' ? (
               <Button
                 disabled={!stripeAddPaymentInitialized}
                 title="Add payment method"
                 onPress={openAddPaymentSheet}
               />
             ) : null}
-            {customerHasPaymentMethods && !paymentMethodsLoading ? (
+            {customerHasPaymentMethods &&
+            !paymentMethodsLoading &&
+            subscription !== 'loading' &&
+            subscription !== 'subscribed' ? (
               <Button
                 disabled={!stripeAcceptPaymentInitialized}
                 title="Pay $1"
                 onPress={openAcceptPaymentSheet}
               />
+            ) : null}
+            {customerHasPaymentMethods &&
+            !paymentMethodsLoading &&
+            subscription === 'none' ? (
+              <>
+                <Text>OR</Text>
+                <Button
+                  title="Get Unlimited"
+                  onPress={showSubscriptionPaymentMethodConfirm}
+                />
+              </>
+            ) : null}
+            {subscription === 'loading' ? (
+              <ActivityIndicator style={{ margin: 10 }} />
+            ) : null}
+            {subscription === 'error' ? (
+              <Text>Uh oh, something went wrong subscribing to unlimited</Text>
+            ) : null}
+            {subscription === 'subscribed' ? (
+              <>
+                <Text style={{ fontWeight: 'bold' }}>Subscription Status</Text>
+                <Text>You have unlimited!</Text>
+              </>
             ) : null}
           </>
         )}
@@ -703,6 +894,10 @@ interface StripePaymentMethod {
     brand: string;
     last4: string;
   };
+}
+
+interface StripeSubscriptions {
+  data: { id: string }[];
 }
 
 interface GoogleSigninError {
