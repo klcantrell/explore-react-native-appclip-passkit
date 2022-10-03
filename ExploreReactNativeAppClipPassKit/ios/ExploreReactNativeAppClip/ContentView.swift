@@ -2,6 +2,7 @@ import SwiftUI
 import UIKit
 import PassKit
 import AuthenticationServices
+import GoogleSignInSwift
 
 struct ContentView: View {
   let walletManager: WalletManager
@@ -12,6 +13,7 @@ struct ContentView: View {
   @State var alreadyHasPass: Bool? = nil
   @State var fetchedPass: PKPass? = nil
   @State var errorMessage: String? = nil
+  @State var signInWithGoogleAlertIsPresented = false
 
   var body: some View {
     VStack {
@@ -32,7 +34,7 @@ struct ContentView: View {
                   walletManager.presentPass(fetchedPass)
                 } else {
                   walletManager.downloadWalletPass(
-                    url: "https://ed14-2600-1700-8c21-c160-cc84-91d1-3a75-b194.ngrok.io/applepass",
+                    url: "https://ad0e-2600-1700-8c21-c160-c6a-4ccf-ce03-b1e1.ngrok.io/applepass",
                     onSuccess: { (pass: PKPass) in
                       alreadyHasPass = true
                       if let defaults = UserDefaults(suiteName: APP_GROUP) {
@@ -47,6 +49,16 @@ struct ContentView: View {
             AppleSignInButton()
               .frame(width: 275, height: 60)
               .padding()
+            GoogleSignInButton(scheme: .dark, style: .wide) {
+              signInWithGoogleAlertIsPresented = true
+            }
+              .frame(width: 275)
+              .alert(isPresented: $signInWithGoogleAlertIsPresented) {
+                Alert(
+                  title: Text("Sign in with Google"),
+                  message: Text("You just signed in with Google!")
+                )
+              }
           }
         } else {
           ProgressView().frame(height: 40)

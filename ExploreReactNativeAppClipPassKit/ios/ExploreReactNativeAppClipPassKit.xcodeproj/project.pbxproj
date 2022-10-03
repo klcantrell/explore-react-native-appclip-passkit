@@ -23,6 +23,8 @@
 		E539B18528BAFFF00059993D /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = E539B18428BAFFF00059993D /* Preview Assets.xcassets */; };
 		E539B18A28BAFFF00059993D /* ExploreReactNativeAppClip.app in Embed App Clips */ = {isa = PBXBuildFile; fileRef = E539B17B28BAFFEF0059993D /* ExploreReactNativeAppClip.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		E539B19028BB02B30059993D /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = E539B18F28BB02B30059993D /* GoogleService-Info.plist */; };
+		E55E08DA28EA75BF0064004D /* GoogleSignIn in Frameworks */ = {isa = PBXBuildFile; productRef = E55E08D928EA75BF0064004D /* GoogleSignIn */; };
+		E55E08DC28EA75C50064004D /* GoogleSignInSwift in Frameworks */ = {isa = PBXBuildFile; productRef = E55E08DB28EA75C50064004D /* GoogleSignInSwift */; };
 		E58C3B6728BF0170001931D9 /* WalletManagerBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = E58C3B6628BF0170001931D9 /* WalletManagerBridge.m */; };
 		E58C3B6928BF066F001931D9 /* WalletManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = E58C3B6828BF066F001931D9 /* WalletManager.swift */; };
 		E58C3B6A28BF066F001931D9 /* WalletManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = E58C3B6828BF066F001931D9 /* WalletManager.swift */; };
@@ -91,6 +93,7 @@
 		E539B18728BAFFF00059993D /* ExploreReactNativeAppClip.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = ExploreReactNativeAppClip.entitlements; sourceTree = "<group>"; };
 		E539B18F28BB02B30059993D /* GoogleService-Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
 		E539B61228BA8989009A154D /* ExploreReactNativeAppClipPassKit.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; name = ExploreReactNativeAppClipPassKit.entitlements; path = ExploreReactNativeAppClipPassKit/ExploreReactNativeAppClipPassKit.entitlements; sourceTree = "<group>"; };
+		E55E08D728EA75B00064004D /* libGoogleSignIn.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; path = libGoogleSignIn.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		E58C3B6628BF0170001931D9 /* WalletManagerBridge.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = WalletManagerBridge.m; sourceTree = "<group>"; };
 		E58C3B6828BF066F001931D9 /* WalletManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WalletManager.swift; sourceTree = "<group>"; };
 		E5C7F8DD28CD5EB000C71C7B /* AddPassButtonManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddPassButtonManager.swift; sourceTree = "<group>"; };
@@ -120,6 +123,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				E55E08DA28EA75BF0064004D /* GoogleSignIn in Frameworks */,
+				E55E08DC28EA75C50064004D /* GoogleSignInSwift in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -167,6 +172,7 @@
 		2D16E6871FA4F8E400B85C8A /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				E55E08D728EA75B00064004D /* libGoogleSignIn.a */,
 				E5220B9128C19BEC0001161C /* PassKit.framework */,
 				ED297162215061F000B7C4FE /* JavaScriptCore.framework */,
 				5DCACB8F33CDC322A6C60F78 /* libPods-ExploreReactNativeAppClipPassKit.a */,
@@ -303,6 +309,10 @@
 			dependencies = (
 			);
 			name = ExploreReactNativeAppClip;
+			packageProductDependencies = (
+				E55E08D928EA75BF0064004D /* GoogleSignIn */,
+				E55E08DB28EA75C50064004D /* GoogleSignInSwift */,
+			);
 			productName = ExploreReactNativeAppClip;
 			productReference = E539B17B28BAFFEF0059993D /* ExploreReactNativeAppClip.app */;
 			productType = "com.apple.product-type.application.on-demand-install-capable";
@@ -337,6 +347,9 @@
 				Base,
 			);
 			mainGroup = 83CBB9F61A601CBA00E9B192;
+			packageReferences = (
+				E55E08D228EA751F0064004D /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */,
+			);
 			productRefGroup = 83CBBA001A601CBA00E9B192 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
@@ -652,7 +665,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = ExploreReactNativeAppClipPassKit/ExploreReactNativeAppClipPassKit.entitlements;
-				CURRENT_PROJECT_VERSION = 4;
+				CURRENT_PROJECT_VERSION = 7;
 				DEVELOPMENT_TEAM = BMJG6U6BC7;
 				ENABLE_BITCODE = NO;
 				INFOPLIST_FILE = ExploreReactNativeAppClipPassKit/Info.plist;
@@ -681,7 +694,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = ExploreReactNativeAppClipPassKit/ExploreReactNativeAppClipPassKit.entitlements;
-				CURRENT_PROJECT_VERSION = 4;
+				CURRENT_PROJECT_VERSION = 7;
 				DEVELOPMENT_TEAM = BMJG6U6BC7;
 				INFOPLIST_FILE = ExploreReactNativeAppClipPassKit/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -851,7 +864,7 @@
 				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
 				CODE_SIGN_ENTITLEMENTS = ExploreReactNativeAppClip/ExploreReactNativeAppClip.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 4;
+				CURRENT_PROJECT_VERSION = 7;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				DEVELOPMENT_ASSET_PATHS = "\"ExploreReactNativeAppClip/Preview Content\"";
 				DEVELOPMENT_TEAM = BMJG6U6BC7;
@@ -897,7 +910,7 @@
 				CODE_SIGN_ENTITLEMENTS = ExploreReactNativeAppClip/ExploreReactNativeAppClip.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 4;
+				CURRENT_PROJECT_VERSION = 7;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_ASSET_PATHS = "\"ExploreReactNativeAppClip/Preview Content\"";
 				DEVELOPMENT_TEAM = BMJG6U6BC7;
@@ -968,6 +981,30 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		E55E08D228EA751F0064004D /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/google/GoogleSignIn-iOS";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 6.0.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		E55E08D928EA75BF0064004D /* GoogleSignIn */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = E55E08D228EA751F0064004D /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */;
+			productName = GoogleSignIn;
+		};
+		E55E08DB28EA75C50064004D /* GoogleSignInSwift */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = E55E08D228EA751F0064004D /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */;
+			productName = GoogleSignInSwift;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 83CBB9F71A601CBA00E9B192 /* Project object */;
 }
