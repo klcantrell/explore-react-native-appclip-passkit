@@ -231,6 +231,7 @@ app.post("/payment-sheet", (_req, res) => __awaiter(void 0, void 0, void 0, func
         amount: 100,
         currency: "usd",
         customer: TEST_STRIPE_CUSTOMER,
+        setup_future_usage: "off_session",
         automatic_payment_methods: {
             enabled: true,
         },
@@ -332,6 +333,10 @@ app.post("/stripe-webhook", express_1.default.raw({ type: "application/json" }),
                 },
             });
             break;
+        case "payment_intent.succeeded":
+            const successfulPaymentIntent = event.data
+                .object;
+            console.log("Payment intent succeeded", successfulPaymentIntent);
         default:
             console.log(`Unhandled event type ${event.type}`);
     }

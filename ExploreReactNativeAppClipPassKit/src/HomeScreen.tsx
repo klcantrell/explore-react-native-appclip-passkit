@@ -42,7 +42,7 @@ import WalletManager, { isWalletManagerError } from './WalletManager';
 const APPLE_PASS_IDENTIFIER = 'pass.com.kalalau.free-thing';
 const APPLE_PASS_SERIAL_NUMBER = 'analternateserialnumber'; // alt. bgsksfuioa
 
-const API_URL = 'https://ad0e-2600-1700-8c21-c160-c6a-4ccf-ce03-b1e1.ngrok.io';
+const API_URL = 'https://dd83-64-184-72-246.ngrok.io';
 
 const HomeScreen = (_props: RootStackScreenProps<RootStackRoutes.Home>) => {
   const isDarkMode = useColorScheme() === 'dark';
@@ -588,10 +588,26 @@ function PaymentsWithStripe({
         },
       ]);
     } else {
-      Alert.alert('Success', 'You spent $1', [
+      Alert.alert('Success', 'Save this payment method?', [
         {
-          text: 'Ok',
+          text: 'Yes',
           onPress: () => refreshPaymentMethods(),
+        },
+        {
+          text: 'No',
+          onPress: async () => {
+            setUpdatingPaymentMethods(true);
+            const updatedPaymentMethods = await fetchPaymentMethods();
+            const fifteenMinutesInSeconds = 900;
+            const recentlyAddedMethod = updatedPaymentMethods.find(
+              (method) =>
+                method.created >= Date.now() / 1000 - fifteenMinutesInSeconds,
+            );
+            if (recentlyAddedMethod) {
+              await deletePaymentMethod(recentlyAddedMethod.id);
+            }
+            await refreshPaymentMethods();
+          },
         },
       ]);
     }
@@ -613,51 +629,45 @@ function PaymentsWithStripe({
   };
 
   const showSubscriptionPaymentMethodConfirm = () => {
-    Alert.alert(
-      'Use your saved payment method?',
-      `Should we use the payment method ending in ${
-        paymentMethods![0].card.last4
-      }`,
-      [
-        {
-          text: 'Yes',
-          onPress: async () => {
-            try {
-              setSubscription('loading');
-              const { subscriptionStatus } = await payForSubscription(
-                paymentMethods![0].id,
-              );
-              if (subscriptionStatus !== 'active') {
-                throw Error();
-              }
-              setSubscription('subscribed');
-            } catch (error) {
-              console.log(
-                'Failed to create subscription with existing payment method',
-              );
-              setSubscription('error');
-            }
-          },
+    Alert.alert('Please add a payment method', 'Enter your payment details', [
+      // {
+      //   text: 'Yes',
+      //   onPress: async () => {
+      //     try {
+      //       setSubscription('loading');
+      //       const { subscriptionStatus } = await payForSubscription(
+      //         paymentMethods![0].id,
+      //       );
+      //       if (subscriptionStatus !== 'active') {
+      //         throw Error();
+      //       }
+      //       setSubscription('subscribed');
+      //     } catch (error) {
+      //       console.log(
+      //         'Failed to create subscription with existing payment method',
+      //       );
+      //       setSubscription('error');
+      //     }
+      //   },
+      // },
+      {
+        text: 'Add payment method',
+        onPress: async () => {
+          try {
+            await initializeSubscriptionPaymentSheet();
+            openSubscriptionPaymentSheet();
+          } catch (error) {
+            console.log(
+              'Failed to create subscription with new payment method',
+            );
+          }
         },
-        {
-          text: 'Add payment method',
-          onPress: async () => {
-            try {
-              await initializeSubscriptionPaymentSheet();
-              openSubscriptionPaymentSheet();
-            } catch (error) {
-              console.log(
-                'Failed to create subscription with new payment method',
-              );
-            }
-          },
-        },
-        {
-          text: 'Cancel',
-          style: 'cancel',
-        },
-      ],
-    );
+      },
+      {
+        text: 'Cancel',
+        style: 'cancel',
+      },
+    ]);
   };
 
   const showSubscriptionActiveAlert = () => {
@@ -666,7 +676,7 @@ function PaymentsWithStripe({
         text: 'Ok',
         onPress: async () => {
           await refreshPaymentMethods();
-          setSubscription('subscribed');
+          await refreshSubscriptions();
         },
       },
     ]);
@@ -691,11 +701,11 @@ function PaymentsWithStripe({
   };
 
   useEffect(() => {
-    if (!customerHasPaymentMethods) {
-      initializeAddPaymentSheet();
-    } else {
-      initializeAcceptPaymentSheet();
-    }
+    // if (!customerHasPaymentMethods) {
+    //   initializeAddPaymentSheet();
+    // } else {
+    initializeAcceptPaymentSheet();
+    // }
   }, [
     customerHasPaymentMethods,
     initializeAcceptPaymentSheet,
@@ -746,6 +756,10 @@ function PaymentsWithStripe({
                         'Are you sure you want to delete this payment method?',
                         [
                           {
+                            style: 'cancel',
+                            text: 'Cancel',
+                          },
+                          {
                             style: 'destructive',
                             text: 'Delete',
                             onPress: async () => {
@@ -771,7 +785,7 @@ function PaymentsWithStripe({
                 </View>
               ))
             )}
-            {!customerHasPaymentMethods &&
+            {/* {!customerHasPaymentMethods &&
             !paymentMethodsLoading &&
             subscription !== 'subscribed' ? (
               <Button
@@ -779,17 +793,17 @@ function PaymentsWithStripe({
                 title="Add payment method"
                 onPress={openAddPaymentSheet}
               />
-            ) : null}
-            {customerHasPaymentMethods &&
+            ) : null} */}
+            {/* {customerHasPaymentMethods &&
             !paymentMethodsLoading &&
             subscription !== 'loading' &&
-            subscription !== 'subscribed' ? (
-              <Button
-                disabled={!stripeAcceptPaymentInitialized}
-                title="Pay $1"
-                onPress={openAcceptPaymentSheet}
-              />
-            ) : null}
+            subscription !== 'subscribed' ? ( */}
+            <Button
+              disabled={!stripeAcceptPaymentInitialized}
+              title="Pay $1"
+              onPress={openAcceptPaymentSheet}
+            />
+            {/* ) : null}
             {customerHasPaymentMethods &&
             !paymentMethodsLoading &&
             subscription === 'none' ? (
@@ -812,7 +826,7 @@ function PaymentsWithStripe({
                 <Text style={{ fontWeight: 'bold' }}>Subscription Status</Text>
                 <Text>You have unlimited!</Text>
               </>
-            ) : null}
+            ) : null} */}
           </>
         )}
       </View>
@@ -894,6 +908,7 @@ interface StripePaymentMethod {
     brand: string;
     last4: string;
   };
+  created: number;
 }
 
 interface StripeSubscriptions {

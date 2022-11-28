@@ -256,6 +256,7 @@ app.post("/payment-sheet", async (_req: Request, res: Response) => {
     amount: 100,
     currency: "usd",
     customer: TEST_STRIPE_CUSTOMER,
+    setup_future_usage: "off_session",
     automatic_payment_methods: {
       enabled: true,
     },
@@ -388,6 +389,10 @@ app.post(
           },
         });
         break;
+      case "payment_intent.succeeded":
+        const successfulPaymentIntent = event.data
+          .object as Stripe.PaymentIntent;
+        console.log("Payment intent succeeded", successfulPaymentIntent);
       default:
         console.log(`Unhandled event type ${event.type}`);
     }
